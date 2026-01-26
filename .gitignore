@@ -1,0 +1,6 @@
+test
+test.cpp
+*.in
+*.out
+*.zip
+submit*
