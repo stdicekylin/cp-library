@@ -5,9 +5,15 @@
 template <uint32_t B = 24>
 class IntegerSet {
  public:
-  IntegerSet() : n(1 << B) {};
-  explicit IntegerSet(uint32_t _n) : n(_n) {
+  IntegerSet() { build(1u << B); };
+  explicit IntegerSet(uint32_t _n) { build(_n); }
+
+  void build(uint32_t _n) {
+    n = _n;
     CHECK(0 <= n && n <= (1 << B));
+    b0.assign(1u << L0, 0);
+    b1.assign(1u << L1, 0);
+    b2.assign(1u << L2, 0);
   }
 
   bool insert(uint32_t pos) {
@@ -44,9 +50,9 @@ class IntegerSet {
 
   uint32_t n = 0;
   size_t counter = 0;
-  uint64_t b0[1 << L0]{};
-  uint64_t b1[1 << L1]{};
-  uint64_t b2[1 << L2]{};
+  std::vector<uint64_t> b0;
+  std::vector<uint64_t> b1;
+  std::vector<uint64_t> b2;
   uint64_t b3 = 0;
 
   static constexpr int msb(uint64_t x) {

@@ -36,10 +36,6 @@ def is_within(child: Path, parent: Path) -> bool:
 def read_text(p: Path) -> str:
     return p.read_text(encoding="utf-8", errors="replace")
 
-def should_keep_include_line_verbatim(inc: str) -> bool:
-    s = inc.replace("\\", "/").strip().lower()
-    return ("lib" in s) and ("debug" in s)
-
 def ensure_one_blank_line_after_chunk(out_lines: list[str]) -> None:
     tail = "".join(out_lines[-3:]) if out_lines else ""
     if tail.endswith("\n\n"):
@@ -87,10 +83,6 @@ def expand_file(
         bracket, inc = m.group(1), m.group(2).strip()
 
         if bracket == "<":
-            out_lines.append(line)
-            continue
-
-        if should_keep_include_line_verbatim(inc):
             out_lines.append(line)
             continue
 

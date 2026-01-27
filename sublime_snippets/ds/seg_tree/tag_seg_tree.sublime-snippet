@@ -1,0 +1,9 @@
+<snippet>
+  <content><![CDATA[
+lib/ds/seg_tree/tag_seg_tree.hpp
+]]></content>
+  <!-- Optional: Set a tabTrigger to define how to trigger the snippet -->
+  <tabTrigger>lib/ds/seg_tree/tag_seg_tree.hpp</tabTrigger>
+  <!-- Optional: Set a scope to limit where the snippet will trigger -->
+  <scope>source.c++</scope>
+</snippet>
