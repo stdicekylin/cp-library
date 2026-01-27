@@ -26,4 +26,4 @@ constexpr int popcount(T x) noexcept {
                         : __builtin_popcountll(static_cast<uint64_t>(x));
 }
 
-}
+}  // namespace my_bit

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "lib/debug.hpp"
+
 template <typename T>
 struct FenwickTreeRange {
   int n = 0;
@@ -10,7 +12,7 @@ struct FenwickTreeRange {
 
   void resize(int _n) {
     CHECK(_n >= 0);
-    n = _n; 
+    n = _n;
     t1.assign(n + 1, T{});
     t2.assign(n + 1, T{});
   }

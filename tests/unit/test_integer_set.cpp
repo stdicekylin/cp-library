@@ -1,12 +1,6 @@
 #include <bits/stdc++.h>
 using namespace std;
 
-#ifdef LOCAL
-#include "lib/debug.hpp"
-#else
-#define CHECK(expr)
-#endif
-
 #include "lib/misc/timer.hpp"
 #include "lib/ds/set/integer_set.hpp"
 

@@ -1,14 +1,8 @@
 #include <bits/stdc++.h>
 using namespace std;
 
-#ifdef LOCAL
-#include "lib/debug.hpp"
-#else
-#define CHECK(expr)
-#endif
-
 #include "lib/misc/timer.hpp"
-#include "lib/math/modular/barrett.hpp"
+#include "lib/math/modular/barrett64.hpp"
 #include "lib/math/modular/barrett32.hpp"
 
 mt19937_64 rnd_64(chrono::steady_clock::now().time_since_epoch().count());
@@ -64,7 +58,7 @@ void test_main() {
         uint32_t got = bar.reduce(x);
         uint32_t exp = x % mod;
         if (got != exp) {
-          cerr << "[FAIL] barrett64 tc = " << tc << "\n"
+          cerr << "[FAIL] barrett32 tc = " << tc << "\n"
                << "mod = " << mod << ", x = " << x << ", "
                << "got = " << got << ", exp = " << exp << "\n";
           return;

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "lib/debug.hpp"
+
 template <uint32_t B = 24>
 class IntegerSet {
  public:

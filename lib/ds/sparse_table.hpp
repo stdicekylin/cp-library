@@ -1,5 +1,7 @@
 #pragma once
 
+#include "lib/debug.hpp"
+
 template <typename T>
 struct SparseTable {
   using Info = typename T::Info;

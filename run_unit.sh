@@ -7,9 +7,9 @@ CXXFLAGS="-std=c++23 -I. -O2 -DLOCAL -Wall -lm"
 run_one () {
   local src="$1"
   local out="/tmp/$(basename "$src" .cpp)"
-  echo "[build] $src"
+  echo "[BUILD] $src"
   $CXX $CXXFLAGS "$src" -o "$out"
-  echo "[run]   $out"
+  echo "[RUN] $out"
   "$out"
 }
 

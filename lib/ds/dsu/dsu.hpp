@@ -1,5 +1,7 @@
 #pragma once
 
+#include "lib/debug.hpp"
+
 struct DSU {
   int n = 0;
   std::vector<int> fa;

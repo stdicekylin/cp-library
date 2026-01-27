@@ -1,16 +1,13 @@
 #pragma once
 
-// Based on https://en.algorithmica.org/hpc/data-structures/segment-trees/#fenwick-trees
+#include "lib/debug.hpp"
+
 template <typename T>
 struct FenwickTree {
   int n = 0;
   size_t limit = 0;
   std::vector<T> t;
   std::vector<int> bucket;
-
-  static constexpr int hole(int x) {
-    return x + (x >> 10);
-  }
 
   FenwickTree() = default;
   explicit FenwickTree(int _n) { resize(_n); }
@@ -20,14 +17,14 @@ struct FenwickTree {
     n = _n;
     limit = n / 20;
     bucket.reserve(limit);
-    t.assign(hole(n) + 1, T{});
+    t.assign(n + 1, T{});
   }
 
   void add(int x, const T& v) {
     CHECK(0 <= x && x < n);
     if (bucket.size() < limit) bucket.push_back(x);
     for (++x; x <= n; x += x & -x) {
-      t[hole(x)] += v;
+      t[x] += v;
     }
   }
 
@@ -35,7 +32,7 @@ struct FenwickTree {
     CHECK(0 <= x && x <= n);
     T res{};
     for (; x > 0; x &= x - 1) {
-      res += t[hole(x)];
+      res += t[x];
     }
     return res;
   }
@@ -49,7 +46,7 @@ struct FenwickTree {
     if (bucket.size() < limit) {
       for (int x : bucket) {
         for (++x; x <= n; x += x & -x) {
-          t[hole(x)] = T{};
+          t[x] = T{};
         }
       }
     } else {

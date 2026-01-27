@@ -1,10 +1,12 @@
 #pragma once
 
-struct Barrett {
+#include "lib/debug.hpp"
+
+struct Barrett64 {
   uint64_t mod, inv;
 
-  Barrett() = default;
-  constexpr explicit Barrett(uint64_t m) {
+  Barrett64() = default;
+  explicit Barrett64(uint64_t m) {
     set_mod(m);
   }
 
@@ -20,3 +22,5 @@ struct Barrett {
     return x;
   }
 };
+
+using Barrett = Barrett64;

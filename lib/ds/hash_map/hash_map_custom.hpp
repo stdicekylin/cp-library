@@ -1,7 +1,7 @@
 #pragma once
 
 template <typename K, typename V, uint32_t N, typename Hasher>
-struct HashMap {
+struct HashMapCustom {
   static constexpr uint32_t Size  = 1u << N;
   static constexpr uint32_t Mask  = Size - 1;
   static constexpr uint32_t Limit = Size >> 7;
@@ -19,7 +19,7 @@ struct HashMap {
     return hasher(k) * Magic >> Shift;
   }
 
-  HashMap() { clear(); }
+  HashMapCustom() { clear(); }
 
   void clear() {
     if (counter <= Limit) {

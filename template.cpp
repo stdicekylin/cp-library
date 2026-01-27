@@ -1,12 +1,6 @@
 #include <bits/stdc++.h>
 using namespace std;
 
-#ifdef LOCAL
-#include "lib/debug.hpp"
-#else
-#define CHECK(expr)
-#endif
-
 using ll  = long long;
 using ull = unsigned long long;
 

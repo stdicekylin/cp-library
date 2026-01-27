@@ -1,10 +1,12 @@
 #pragma once
 
+#include "lib/debug.hpp"
+
 struct Barrett32 {
   uint32_t mod, inv;
 
   Barrett32() = default;
-  constexpr explicit Barrett32(uint32_t m) {
+  explicit Barrett32(uint32_t m) {
     set_mod(m);
   }
 
