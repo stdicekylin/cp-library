@@ -3,8 +3,7 @@
 #include "lib/debug.hpp"
 
 template <uint32_t B = 24>
-class IntegerSet {
- public:
+struct IntegerSet {
   IntegerSet() { build(1u << B); };
   explicit IntegerSet(uint32_t _n) { build(_n); }
 
@@ -18,7 +17,17 @@ class IntegerSet {
 
   bool insert(uint32_t pos) {
     CHECK(0 <= pos && pos < n);
-    return insert0(pos);
+    bool op = b0[pos >> 6] >> (pos & 63) & 1;
+    if (op) {
+      return false;
+    } else {
+      b0[pos >> 6] |= 1ull << (pos & 63);
+      b1[pos >> 12] |= 1ull << (pos >> 6 & 63);
+      b2[pos >> 18] |= 1ull << (pos >> 12 & 63);
+      b3 |= 1ull << (pos >> 18);
+      ++counter;
+      return true;
+    }
   }
 
   bool erase(uint32_t pos) {
@@ -69,27 +78,6 @@ class IntegerSet {
 
   static constexpr int lsb(uint64_t x, uint32_t pos) {
     return ++pos != 64 ? lsb(x >> pos << pos) : -1;
-  }
-
-  bool insert0(uint32_t pos) {
-    uint32_t u = pos >> 6, v = pos & 63;
-    if (b0[u] >> v & 1) return false;
-    if (!b0[u]) insert1(u);
-    b0[u] |= 1ull << v;
-    ++counter;
-    return true;
-  }
-
-  void insert1(uint32_t pos) {
-    uint32_t u = pos >> 6, v = pos & 63;
-    if (!b1[u]) insert2(u);
-    b1[u] |= 1ull << v;
-  }
-
-  void insert2(uint32_t pos) {
-    uint32_t u = pos >> 6, v = pos & 63;
-    if (!b2[u]) b3 |= 1ull << u;
-    b2[u] |= 1ull << v;
   }
 
   bool erase0(uint32_t pos) {

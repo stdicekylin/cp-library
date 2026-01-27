@@ -7,9 +7,6 @@ Written by ChatGPT (GPT-5.2 Thinking).
 
 Behavior:
 - Expand only quote-includes that resolve inside lib/... into one file.
-- If an include path contains BOTH "lib" and "debug" (in any order), keep that #include line EXACTLY as-is:
-  - do not inline it
-  - do not delete it
 - Ignore all '#pragma once' lines (remove them from output).
 - Preserve original comments from source files; do NOT add any extra comments to generated C++ output.
 - When an include expands a new file, insert a blank line after the expanded chunk.

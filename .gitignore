@@ -3,4 +3,5 @@ test.cpp
 *.in
 *.out
 *.zip
+*.swp
 submit*
