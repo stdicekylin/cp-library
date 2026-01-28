@@ -19,11 +19,13 @@ struct Timer {
   }
 
   void print() const {
+#ifdef LOCAL
     if (!name.empty()) {
-      std::cerr << "[TIMER] " << name << ": " << get() << " ms" << std::endl;
+      std::cerr << "[TIMER] " << name << ": " << get() << " ms\n";
     } else {
-      std::cerr << "[TIMER] " << get() << " ms" << std::endl;
+      std::cerr << "[TIMER] " << get() << " ms\n";
     }
+#endif
   }
 };
 

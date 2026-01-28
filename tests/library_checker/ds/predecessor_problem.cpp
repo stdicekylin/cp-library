@@ -8,7 +8,7 @@ using namespace std;
 using ll  = long long;
 using ull = unsigned long long;
 
-FastIO<1 << 21, 8> io;
+FastIO<1 << 20, 1 << 21> io;
 
 constexpr int N = 2e5 + 5;
 
@@ -21,9 +21,34 @@ void solve_main() {
   io >> n >> q;
   io >> t;
 
-  for (int i = 0; i < n; ++i) {
-    if (t[i] == '1') {
-      s.insert(i);
+  for (int i = 0, _i = n + 64; i < _i; i += 64) {
+    uint64_t mask = 0;
+    for (int j = 0; j < 64; ++j) {
+      mask |= 1ull * (t[i + j] == '1') << j;
+    }
+    s.b0[i >> 6] = mask;
+  }
+
+  for (int i = 0, _i = n / 64 + 64; i < _i; i += 64) {
+    uint64_t mask = 0;
+    for (int j = 0; j < 64; ++j) {
+      mask |= 1ull * (s.b0[i + j] != 0) << j;
+    }
+    s.b1[i >> 6] = mask;
+  }
+
+  for (int i = 0, _i = n / 64 / 64 + 64; i < _i; i += 64) {
+    uint64_t mask = 0;
+    for (int j = 0; j < 64; ++j) {
+      mask |= 1ull * (s.b1[i + j] != 0) << j;
+    }
+    s.b2[i >> 6] = mask;
+  }
+
+  if (true) {
+    s.b3 = 0;
+    for (int j = 0; j < 64; ++j) {
+      s.b3 |= 1ull * (s.b2[j] != 0) << j;
     }
   }
 

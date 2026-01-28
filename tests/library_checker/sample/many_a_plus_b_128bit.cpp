@@ -7,9 +7,9 @@ using namespace std;
 using ll  = long long;
 using ull = unsigned long long;
 
-FastIO<1 << 21, 38> io;
+FastIO<1 << 20, 1 << 21> io;
 
-constexpr int N = 2e5 + 5;
+constexpr int N = 2e5 + 5;  
 
 void solve_main() {
   __int128_t a, b;

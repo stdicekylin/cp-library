@@ -4,88 +4,83 @@
 #include "lib/misc/my_type_traits.hpp"
 
 #ifdef __unix__
+#ifndef DISABLE_MMAP
+#define ENABLE_MMAP
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <unistd.h>
 #endif
+#endif
 
 namespace fast_io {
 
+template <int BufSize = 1 << 20>
 struct FastInput {
-  static constexpr size_t Offset = 16;
+  static constexpr size_t Offset = 64;
 
+  FILE* file;
   char* buf;
   const char* cur;
   const char* end;
 
-#ifdef __unix__
-  size_t map_size;
-#endif
-
-  explicit FastInput(FILE* file = stdin)
-      : buf(nullptr),
-        cur(nullptr),
-        end(nullptr)
-#ifdef __unix__
-        ,
-        map_size(0)
-#endif
-  {
-#ifdef __unix__
-    struct stat status;
+  explicit FastInput(FILE* _file = stdin) : file(_file) {
+#ifdef ENABLE_MMAP
+    struct stat st;
     int fd = fileno(file);
-    fstat(fd, &status);
-    map_size = static_cast<size_t>(status.st_size);
+    fstat(fd, &st);
+    size_t map_size = static_cast<size_t>(st.st_size);
     cur = static_cast<const char*>(
-        mmap(nullptr, map_size, PROT_READ, MAP_PRIVATE, fd, 0));
+        mmap(nullptr, map_size + Offset, PROT_READ, MAP_PRIVATE, fd, 0));
     end = cur + map_size;
 #else
-    fseek(file, 0, SEEK_END);
-    size_t file_size = ftell(file);
-    fseek(file, 0, SEEK_SET);
-    cur = buf = new char[file_size + Offset];
-    end = buf + fread(buf, 1, file_size, file);
+    cur = buf = new char[BufSize + Offset];
+    end = buf + fread(buf, 1, BufSize, file);
     memset(const_cast<char*>(end), 0, Offset);
 #endif
   }
 
-  ~FastInput() {
-#ifdef __unix__
-    if (cur != nullptr) {
-      munmap(const_cast<char*>(cur), map_size);
-    }
+#ifdef ENABLE_MMAP
+  void ensure(int need) {}
 #else
-    delete[] buf;
+  void ensure(int need) {
+    int rem = end - cur;
+    if (__builtin_expect(rem >= need, true)) return;
+    if (rem > 0 && cur != buf) memmove(buf, cur, rem);
+    cur = buf;
+    end = buf + rem + fread(buf + rem, 1, BufSize - rem, file);
+    memset(const_cast<char*>(end), 0, Offset);
+  }
 #endif
-  }
-
-  constexpr bool is_digit() const {
-    return (*cur > 47) & (*cur < 58);
-  }
 
   void skip_space() {
-    CHECK(cur < end);
-    while (*cur < 33) {
+    ensure(1);
+    while (__builtin_expect(*cur < 33, false)) {
       ++cur;
+      ensure(1);
       CHECK(cur < end);
     }
   }
 
-  void read(bool& x) { x = static_cast<bool>(*cur++ & 15); }
+  void read(bool& x) {
+    CHECK(*cur == '0' || *cur == '1');
+    x = (*cur++ == '1');
+    ensure(1);
+    CHECK(*cur <= 32);
+    ++cur;
+  }
 
   template <typename T>
   std::enable_if_t<my_type_traits::is_unsigned_v<T>, void> read(T& x) {
-    CHECK(is_digit());
+    ensure(40);
+    CHECK(*cur >= '0' && *cur <= '9');
     x = *cur++ & 15;
 
-    static constexpr bool check8 = (std::numeric_limits<T>::digits10 >= 8);
-    static constexpr bool check4 = (std::numeric_limits<T>::digits10 >= 4);
-    static constexpr bool check2 = (std::numeric_limits<T>::digits10 >= 2);
+    static constexpr int count8 = std::numeric_limits<T>::digits10 / 8;
 
-    while (check8) {
+    for (int i = 0; i < count8; ++i) {
       uint64_t v;
       memcpy(&v, cur, 8);
-      if ((v -= 0x3030303030303030) & 0x8080808080808080) break;
+      if ((v ^= 0x3030303030303030) & 0xf0f0f0f0f0f0f0f0) break;
       v = (v * 10 + (v >> 8)) & 0xff00ff00ff00ff;
       v = (v * 100 + (v >> 16)) & 0xffff0000ffff;
       v = (v * 10000 + (v >> 32)) & 0xffffffff;
@@ -93,30 +88,12 @@ struct FastInput {
       cur += 8;
     }
 
-    if (check4) {
-      uint32_t v;
-      memcpy(&v, cur, 4);
-      if (!((v -= 0x30303030) & 0x80808080)) {
-        v = (v * 10 + (v >> 8)) & 0xff00ff;
-        v = (v * 100 + (v >> 16)) & 0xffff;
-        x = 10000 * x + v;
-        cur += 4;
-      }
+    for (; *cur >= '0'; ++cur) {
+      CHECK(*cur <= '9');
+      x = x * 10 + (*cur & 15);
     }
-
-    if (check2) {
-      uint16_t v;
-      memcpy(&v, cur, 2);
-      if (!((v -= 0x3030) & 0x8080)) {
-        v = (v * 10 + (v >> 8)) & 0xff;
-        x = x * 100 + v;
-        cur += 2;
-      }
-    }
-
-    if (is_digit()) {
-      x = x * 10 + (*cur++ & 15);
-    }
+    CHECK(*cur <= 32);
+    ++cur;
   }
 
   template <typename T>
@@ -128,12 +105,36 @@ struct FastInput {
     x = static_cast<T>(neg ? -v : v);
   }
 
-  void read(char& c) { c = *cur++; }
+  void read(char& c) {
+    c = *cur++;
+    ensure(1);
+    CHECK(*cur <= 32);
+    ++cur;
+  }
 
   void read(std::string& s) {
+    CHECK(*cur > 32);
+#ifdef ENABLE_MMAP
     const char* first = cur;
     while (*cur > 32) ++cur;
     s.assign(first, cur);
+    ++cur;
+#else
+    s.clear();
+    while (true) {
+      const char* last = cur;
+      while (last < end && *last > 32) ++last;
+      if (last < end) {
+        s.append(cur, last);
+        cur = last + 1;
+        return;
+      } else {
+        s.append(cur, last);
+        cur = end;
+        ensure(1);
+      }
+    }
+#endif
   }
 
   template <typename T>
@@ -145,8 +146,12 @@ struct FastInput {
 
   FastInput& operator>>(char* s) {
     skip_space();
-    while (*cur > 32) *s++ = *cur++;
+    while (*cur > 32) {
+      *s++ = *cur++;
+      ensure(1);
+    }
     *s = 0;
+    ++cur;
     return *this;
   }
 };
@@ -154,17 +159,18 @@ struct FastInput {
 struct EndLine {
 } endl;
 
-template <uint32_t BufSize = 1 << 20, uint32_t MaxDigits = 40>
+template <uint32_t BufSize = 1 << 20>
 struct FastOutput {
   FILE* file;
-  char buf[BufSize];
+  char* buf;
   char* cur;
   const char* end;
-  char aux[MaxDigits];
   char table[40000];
 
-  explicit FastOutput(FILE* _file = stdout)
-      : file(_file), cur(buf), end(buf + BufSize) {
+  explicit FastOutput(FILE* _file = stdout) : file(_file) {
+    cur = buf = new char[BufSize];
+    end = buf + BufSize;
+
     char* pos = table;
     for (char i = 48; i < 58; ++i) {
       for (char j = 48; j < 58; ++j) {
@@ -177,62 +183,121 @@ struct FastOutput {
     }
   }
 
+  template <int N = BufSize>
   void flush() {
-    fwrite(buf, 1, cur - buf, file);
-    cur = buf;
+    if (__builtin_expect(end - cur < N, false)) {
+      fwrite(buf, 1, cur - buf, file);
+      cur = buf;
+    }
   }
 
   ~FastOutput() { flush(); }
 
-  FastOutput& operator<<(bool x) {
-    if (__builtin_expect(cur == end, false)) {
-      flush();
+  template <bool head = false>
+  std::enable_if_t<head, void> print_unit(uint32_t x) {
+    int cnt = (x > 0) + (x > 9) + (x > 99) + (x > 999);
+    memcpy(cur, table + (x << 2) + 4 - cnt, cnt);
+    cur += cnt;
+  }
+
+  template <bool head = false>
+  std::enable_if_t<!head, void> print_unit(uint32_t x) {
+    memcpy(cur, table + (x << 2), 4);
+    cur += 4;
+  }
+
+  template <int N, bool head = true, typename T>
+  std::enable_if_t<(N > 0), void> print(T x) {
+    print<N - 1, head>(x / 10000);
+    print_unit<false>(x % 10000);
+  }
+
+  template <int N, bool head = true, typename T>
+  std::enable_if_t<(N == 0), void> print(T x) {
+    print_unit<head>(x);
+  }
+
+  template <typename T>
+  std::enable_if_t<(sizeof(T) < 8), void> write(T x) {
+    if (x > 9999'9999) {
+      print<2>(x);
+    } else if (x > 9999) {
+      print<1>(x);
+    } else {
+      print<0>(x);
     }
-    *cur++ = x + '0';
+  }
+
+  template <typename T>
+  std::enable_if_t<(sizeof(T) == 8), void> write(T x) {
+    if (x > 9999'9999'9999'9999ull) {
+      print<4>(x);
+    } else if (x > 9999'9999'9999ull) {
+      print<3>(x);
+    } else if (x > 9999'9999) {
+      print<2>(x);
+    } else if (x > 9999) {
+      print<1>(static_cast<uint32_t>(x));
+    } else {
+      print<0>(static_cast<uint32_t>(x));
+    }
+  }
+
+  template <typename T>
+  std::enable_if_t<(sizeof(T) > 8), void> write(T x) {
+    static constexpr uint64_t limit1 = 1'0000'0000'0000'0000ull;
+    static constexpr __uint128_t limit2 = static_cast<__uint128_t>(limit1)
+                                        * static_cast<__uint128_t>(limit1);
+    if (x < limit1) {
+      write(static_cast<uint64_t>(x));
+    } else if (x < limit2) {
+      write(static_cast<uint64_t>(x / limit1));
+      print<3, false>(static_cast<uint64_t>(x % limit1));
+    } else {
+      write(static_cast<uint32_t>(x / limit2));
+      x %= limit2;
+      print<3, false>(static_cast<uint64_t>(x / limit1));
+      print<3, false>(static_cast<uint64_t>(x % limit1));
+    }
+  }
+
+  template <typename T>
+  std::enable_if_t<my_type_traits::is_unsigned_v<T>, FastOutput&> operator<<(
+      T x) {
+    flush<std::numeric_limits<T>::digits10 + 1>();
+    if (x > 0) {
+      write(x);
+    } else {
+      *cur++ = '0';
+    }
     return *this;
   }
 
   template <typename T>
-  std::enable_if_t<my_type_traits::is_integral_v<T>, FastOutput&> operator<<(
+  std::enable_if_t<my_type_traits::is_signed_v<T>, FastOutput&> operator<<(
       T x) {
-    using U = my_type_traits::make_unsigned_t<T>;
+    using U = typename my_type_traits::make_unsigned_t<T>;
 
-    if (__builtin_expect(end - cur <= MaxDigits, false)) {
-      flush();
-    }
-
-    U num = static_cast<U>(x);
-
-    if (num == 0) {
-      *cur++ = '0';
-      return *this;
-    }
-
-    if (x < 0) {
-      num = -num;
+    flush<std::numeric_limits<T>::digits10 + 2>();
+    if (x > 0) {
+      write(static_cast<U>(x));
+    } else if (x < 0) {
       *cur++ = '-';
+      write(-static_cast<U>(x));
+    } else {
+      *cur++ = '0';
     }
+    return *this;
+  }
 
-    char* pos = aux + MaxDigits;
-    int count4 = std::numeric_limits<T>::digits10 / 4;
-    for (int i = 0; i < count4; ++i) {
-      if (num > 999) {
-        memcpy(pos -= 4, table + num % 10000 * 4, 4);
-        num /= 10000;
-      }
-    }
-    int cnt = (num > 0) + (num > 9) + (num > 99) + (num > 999);
-    memcpy(pos -= cnt, table + num * 4 + 4 - cnt, cnt);
-    int len = aux + MaxDigits - pos;
-    memcpy(cur, pos, len);
-    cur += len;
+  FastOutput& operator<<(bool x) {
+    flush<1>();
+    *cur++ = x + '0';
     return *this;
   }
 
   FastOutput& operator<<(char c) {
-    if (__builtin_expect(cur == end, false)) {
-      flush();
-    }
+    flush<1>();
     *cur++ = c;
     return *this;
   }
@@ -263,19 +328,18 @@ struct FastOutput {
   }
 
   FastOutput& operator<<(const EndLine& end_line) {
-    if (__builtin_expect(cur == end, false)) {
-      flush();
-    }
+    flush<1>();
     *cur++ = '\n';
     flush();
     return *this;
   }
 };
 
-template <uint32_t BufSize = 1 << 20, uint32_t MaxDigits = 40>
+template <uint32_t InputBufSize  = 1 << 20,
+          uint32_t OutputBufSize = 1 << 20>
 struct FastIO {
-  FastInput* in;
-  FastOutput<BufSize, MaxDigits>* out;
+  FastInput<InputBufSize>* in;
+  FastOutput<OutputBufSize>* out;
 
   FastIO() : in(nullptr), out(nullptr) {}
 
@@ -288,8 +352,8 @@ struct FastIO {
   }
 
   void init(FILE* input_file = stdin, FILE* output_file = stdout) {
-    in = new FastInput(input_file);
-    out = new FastOutput<BufSize, MaxDigits>(output_file);
+    in = new FastInput<InputBufSize>(input_file);
+    out = new FastOutput<OutputBufSize>(output_file);
   }
 
   void flush() { out->flush(); }
@@ -313,7 +377,5 @@ struct FastIO {
 };
 
 }  // namespace fast_io
-
-#define endl fast_io::endl
 
 using fast_io::FastIO;
