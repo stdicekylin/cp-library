@@ -1,6 +1,7 @@
 #pragma once
 
 #include "lib/debug.hpp"
+#include "lib/math/my_bit.hpp"
 
 template <typename T>
 struct SparseTable {
@@ -8,7 +9,7 @@ struct SparseTable {
 
   int n = 0;
   int h = 0;
-  vector<vector<Info>> st;
+  std::vector<std::vector<Info>> st;
 
   SparseTable() = default;
 
@@ -28,15 +29,15 @@ struct SparseTable {
       return;
     }
 
-    h = my_bit::bit_width(n) - 1;
-    st.resize(h + 1);
+    h = my_bit::__lg(n) + 1;
+    st.resize(h);
 
     st[0].resize(n);
     for (int i = 0; i < n; ++i) {
       st[0][i] = *first++;
     }
 
-    for (int i = 1; i <= h; ++i) {
+    for (int i = 1; i < h; ++i) {
       int len = 1 << i;
       int half = len >> 1;
       st[i].resize(n - len + 1);
@@ -59,7 +60,7 @@ struct SparseTable {
   Info prod(int l, int r) const {
     CHECK(0 <= l && l <= r && r <= n);
     if (l == r) return T::id();
-    int k = my_bit::bit_width(r - l) - 1;
+    int k = my_bit::__lg(r - l);
     return T::op(st[k][l], st[k][r - (1 << k)]);
   }
 };

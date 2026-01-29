@@ -8,29 +8,29 @@ struct SegTree {
   using Info = typename T::Info;
 
   int n = 0;
-  int size = 0;
+  int m = 0;
   std::vector<Info> t;
 
   SegTree() = default;
-  explicit SegTree(int _n) { build(_n); }
+  explicit SegTree(int _m) { build(_m); }
 
   template <typename It>
   SegTree(It first, It last) { build(first, last); }
 
-  void build(int _n) {
-    CHECK(_n >= 0);
-    size = _n;
+  void build(int _m) {
+    m = _m;
+    CHECK(m >= 0);
     n = 1;
-    while (n < size) n <<= 1;
+    while (n < m) n <<= 1;
     t.assign(n << 1, T::id());
   }
 
   template <typename It>
   void build(It first, It last) {
-    size = std::distance(first, last);
-    CHECK(size >= 0);
+    m = std::distance(first, last);
+    CHECK(m >= 0);
     n = 1;
-    while (n < size) n <<= 1;
+    while (n < m) n <<= 1;
     t.assign(n << 1, T::id());
     std::copy(first, last, t.begin() + n);
     for (int i = n - 1; i > 0; --i) push_up(i);
@@ -41,18 +41,19 @@ struct SegTree {
   }
 
   void set(int x, const Info& v) {
-    CHECK(0 <= x && x < size);
-    t[x += n] = v;
+    CHECK(0 <= x && x < m);
+    x += n;
+    t[x] = v;
     while (x >>= 1) push_up(x);
   }
 
   Info get(int x) const {
-    CHECK(0 <= x && x < size);
+    CHECK(0 <= x && x < m);
     return t[n + x];
   }
 
   Info prod(int l, int r) const {
-    CHECK(0 <= l && l <= r && r <= size);
+    CHECK(0 <= l && l <= r && r <= m);
     Info left = T::id(), right = T::id();
     for (l += n, r += n; l < r; l >>= 1, r >>= 1) {
       if (l & 1) left = T::op(left, t[l++]);

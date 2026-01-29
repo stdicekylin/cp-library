@@ -9,24 +9,24 @@ struct TagSegTree {
   using Tag  = typename T::Tag;
 
   int n = 0;
-  int size = 0;
+  int m = 0;
   int h = 0;
   std::vector<Info> val;
   std::vector<Tag> tag;
   std::vector<uint8_t> has_tag;
 
   TagSegTree() = default;
-  explicit TagSegTree(int _n) { build(_n); }
+  explicit TagSegTree(int _m) { build(_m); }
 
   template <typename It>
   TagSegTree(It first, It last) { build(first, last); }
 
-  void build(int _n) {
-    CHECK(_n >= 0);
-    size = _n;
+  void build(int _m) {
+    m = _m;
+    CHECK(m >= 0);
     n = 1;
-    while (n < size) n <<= 1;
-    h = my_bit::bit_width(n);
+    while (n < m) n <<= 1;
+    h = my_bit::__lg(n);
     val.assign(n, T::id());
     tag.assign(n << 1, T::tag_id());
     has_tag.assign(n << 1, 0);
@@ -34,11 +34,11 @@ struct TagSegTree {
 
   template <typename It>
   void build(It first, It last) {
-    size = std::distance(first, last);
-    CHECK(size >= 0);
+    m = std::distance(first, last);
+    CHECK(m >= 0);
     n = 1;
-    while (n < size) n <<= 1;
-    h = my_bit::bit_width(n);
+    while (n < m) n <<= 1;
+    h = my_bit::__lg(n);
     val.assign(n, T::id());
     tag.assign(n << 1, T::tag_id());
     has_tag.assign(n << 1, 0);
@@ -52,7 +52,7 @@ struct TagSegTree {
   }
 
   void set(int x, const Info& v) {
-    CHECK(0 <= x && x < size);
+    CHECK(0 <= x && x < m);
     x += n;
     for (int i = h; i > 0; --i) push_down(x >> i);
     tag[x] = T::tag_id();
@@ -60,7 +60,7 @@ struct TagSegTree {
   }
 
   Info get(int x) {
-    CHECK(0 <= x && x < size);
+    CHECK(0 <= x && x < m);
     x += n;
     for (int i = h; i > 0; --i) push_down(x >> i);
     T::apply(val[x - n], tag[x]);
@@ -69,7 +69,7 @@ struct TagSegTree {
   }
 
   Info apply(int x, const Tag& v) {
-    CHECK(0 <= x && x < size);
+    CHECK(0 <= x && x < m);
     x += n;
     for (int i = h; i > 0; --i) push_down(x >> i);
     T::apply(val[x - n], tag[x]);
@@ -79,10 +79,10 @@ struct TagSegTree {
   }
 
   void apply(int l, int r, const Tag& v) {
-    CHECK(0 <= l && l <= r && r <= size);
+    CHECK(0 <= l && l <= r && r <= m);
     if (l == r) return;
     l += n, r += n;
-    int w = my_bit::bit_width(l ^ r);
+    int w = my_bit::__lg(l ^ r);
     int cl = my_bit::countr_zero(l);
     int cr = my_bit::countr_zero(r);
 

@@ -6,27 +6,27 @@
 template <typename T>
 struct LazySegTree {
   using Info = typename T::Info;
-  using Tag  = typename T::Tag;
+  using Tag = typename T::Tag;
 
   int n = 0;
-  int size = 0;
+  int m = 0;
   int h = 0;
   std::vector<Info> t;
   std::vector<Tag> tag;
   std::vector<uint8_t> has_tag;
 
   LazySegTree() = default;
-  explicit LazySegTree(int _n) { build(_n); }
+  explicit LazySegTree(int _m) { build(_m); }
 
   template <typename It>
-  LazySegTree(It first, It last) { build(first, last); }
+  LazySegTree(It first, It last) { bbuild(first, last); }
 
-  void build(int _n) {
-    CHECK(_n >= 0);
-    size = _n;
+  void build(int _m) {
+    m = _m;
+    CHECK(m >= 0);
     n = 1;
-    while (n < size) n <<= 1;
-    h = my_bit::bit_width(n);
+    while (n < m) n <<= 1;
+    h = my_bit::__lg(n);
     t.assign(n << 1, T::id());
     tag.assign(n << 1, T::tag_id());
     has_tag.assign(n << 1, 0);
@@ -34,11 +34,11 @@ struct LazySegTree {
 
   template <typename It>
   void build(It first, It last) {
-    size = std::distance(first, last);
-    CHECK(size >= 0);
+    m = std::distance(first, last);
+    CHECK(m >= 0);
     n = 1;
-    while (n < size) n <<= 1;
-    h = my_bit::bit_width(n);
+    while (n < m) n <<= 1;
+    h = my_bit::__lg(n);
     t.assign(n << 1, T::id());
     tag.assign(n << 1, T::tag_id());
     has_tag.assign(n << 1, 0);
@@ -53,7 +53,7 @@ struct LazySegTree {
   }
 
   void set(int x, const Info& v) {
-    CHECK(0 <= x && x < size);
+    CHECK(0 <= x && x < m);
     x += n;
     for (int i = h; i > 0; --i) push_down(x >> i);
     t[x] = v;
@@ -61,17 +61,18 @@ struct LazySegTree {
   }
 
   Info get(int x) {
-    CHECK(0 <= x && x < size);
+    CHECK(0 <= x && x < m);
     x += n;
-    for (int i = h; i > 0; --i) push_down(x >> i);
-    return t[x];
+    Info res = t[x];
+    while (x >>= 1) T::apply(res, tag[x]);
+    return res;
   }
 
   void apply(int l, int r, const Tag& v) {
-    CHECK(0 <= l && l <= r && r <= size);
+    CHECK(0 <= l && l <= r && r <= m);
     if (l == r) return;
     l += n, r += n;
-    int w = my_bit::bit_width(l ^ r);
+    int w = my_bit::__lg(l ^ r);
     int cl = my_bit::countr_zero(l);
     int cr = my_bit::countr_zero(r);
 
@@ -89,22 +90,21 @@ struct LazySegTree {
   }
 
   Info prod(int l, int r) {
-    CHECK(0 <= l && l <= r && r <= size);
+    CHECK(0 <= l && l <= r && r <= m);
     if (l == r) return T::id();
-    l += n, r += n;
-    int w = my_bit::bit_width(l ^ r);
-    int cl = my_bit::countr_zero(l);
-    int cr = my_bit::countr_zero(r);
-
-    for (int i = h; i > cl; --i) push_down(l >> i);
-    for (int i = std::max(cl, w); i > cr; --i) push_down(r >> i);
-
     Info left = T::id(), right = T::id();
-    for (; l < r; l >>= 1, r >>= 1) {
-      if (l & 1) left = T::op(left, t[l++]);
-      if (r & 1) right = T::op(t[--r], right);
+    l += n - 1, r += n;
+    while ((l ^ r) != 1) {
+      if (~l & 1) left = T::op(left, t[l ^ 1]);
+      if (r & 1) right = T::op(t[r ^ 1], right);
+      l >>= 1, r >>= 1;
+      T::apply(left, tag[l]);
+      T::apply(right, tag[r]);
     }
-    return T::op(left, right);
+
+    Info sum = T::op(left, right);
+    while (l >>= 1) T::apply(sum, tag[l]);
+    return sum;
   }
 
   Info all_prod() const { return t[1]; }
