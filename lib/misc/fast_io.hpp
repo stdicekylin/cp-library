@@ -39,8 +39,12 @@ struct FastInput {
 #endif
   }
 
+#ifndef ENABLE_MMAP
+  ~FastInput() { delete[] buf; }
+#endif
+
 #ifdef ENABLE_MMAP
-  void ensure(int need) {}
+  void ensure(int need) { (void)need; }
 #else
   void ensure(int need) {
     int rem = end - cur;
@@ -191,7 +195,10 @@ struct FastOutput {
     }
   }
 
-  ~FastOutput() { flush(); }
+  ~FastOutput() {
+    flush();
+    delete[] buf;
+  }
 
   template <bool head = false>
   std::enable_if_t<head, void> print_unit(uint32_t x) {
@@ -246,8 +253,8 @@ struct FastOutput {
   template <typename T>
   std::enable_if_t<(sizeof(T) > 8), void> write(T x) {
     static constexpr uint64_t limit1 = 1'0000'0000'0000'0000ull;
-    static constexpr __uint128_t limit2 = static_cast<__uint128_t>(limit1)
-                                        * static_cast<__uint128_t>(limit1);
+    static constexpr __uint128_t limit2 =
+        static_cast<__uint128_t>(limit1) * static_cast<__uint128_t>(limit1);
     if (x < limit1) {
       write(static_cast<uint64_t>(x));
     } else if (x < limit2) {
@@ -335,8 +342,7 @@ struct FastOutput {
   }
 };
 
-template <uint32_t InputBufSize  = 1 << 20,
-          uint32_t OutputBufSize = 1 << 20>
+template <uint32_t InputBufSize = 1 << 20, uint32_t OutputBufSize = 1 << 20>
 struct FastIO {
   FastInput<InputBufSize>* in;
   FastOutput<OutputBufSize>* out;

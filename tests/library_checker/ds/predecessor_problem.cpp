@@ -10,7 +10,7 @@ using ull = unsigned long long;
 
 FastIO<1 << 20, 1 << 21> io;
 
-constexpr int N = 2e5 + 5;
+constexpr int N = 1e7 + 100;
 
 int n, q;
 
@@ -21,15 +21,26 @@ void solve_main() {
   io >> n >> q;
   io >> t;
 
-  for (int i = 0, _i = n + 64; i < _i; i += 64) {
+  auto ptr = t.data();
+
+  for (int i = 0, _i = n - 63; i < _i; i += 64) {
     uint64_t mask = 0;
     for (int j = 0; j < 64; ++j) {
-      mask |= 1ull * (t[i + j] == '1') << j;
+      mask |= static_cast<uint64_t>(*ptr++ & 1) << j;
     }
     s.b0[i >> 6] = mask;
   }
 
-  for (int i = 0, _i = n / 64 + 64; i < _i; i += 64) {
+  if (true) {
+    uint64_t mask = 0;
+    int i = n / 64 * 64;
+    for (int j = 0; j < n - i; ++j) {
+      mask |= static_cast<uint64_t>(*ptr++ & 1) << j;
+    }
+    s.b0[i >> 6] = mask;
+  }
+
+  for (int i = 0, _i = n / 64; i < _i; i += 64) {
     uint64_t mask = 0;
     for (int j = 0; j < 64; ++j) {
       mask |= 1ull * (s.b0[i + j] != 0) << j;
@@ -37,7 +48,7 @@ void solve_main() {
     s.b1[i >> 6] = mask;
   }
 
-  for (int i = 0, _i = n / 64 / 64 + 64; i < _i; i += 64) {
+  for (int i = 0, _i = n / 64 / 64; i < _i; i += 64) {
     uint64_t mask = 0;
     for (int j = 0; j < 64; ++j) {
       mask |= 1ull * (s.b1[i + j] != 0) << j;

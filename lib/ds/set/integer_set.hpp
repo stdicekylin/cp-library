@@ -4,21 +4,33 @@
 
 template <uint32_t B = 24>
 struct IntegerSet {
+  static constexpr uint32_t L0 = B >= 6 ? B - 6 : 0;
+  static constexpr uint32_t L1 = B >= 12 ? B - 12 : 0;
+  static constexpr uint32_t L2 = B >= 18 ? B - 18 : 0;
+
+  uint32_t n = 0;
+  size_t counter = 0;
+  std::vector<uint64_t> b0;
+  std::vector<uint64_t> b1;
+  std::vector<uint64_t> b2;
+  uint64_t b3;
+
   IntegerSet() { build(1u << B); };
   explicit IntegerSet(uint32_t _n) { build(_n); }
 
   void build(uint32_t _n) {
     n = _n;
-    CHECK(0 <= n && n <= (1 << B));
+    counter = 0;
+    CHECK(n <= (1 << B));
     b0.assign(1u << L0, 0);
     b1.assign(1u << L1, 0);
     b2.assign(1u << L2, 0);
+    b3 = 0;
   }
 
   bool insert(uint32_t pos) {
-    CHECK(0 <= pos && pos < n);
-    bool op = b0[pos >> 6] >> (pos & 63) & 1;
-    if (op) {
+    CHECK(pos < n);
+    if (get(pos)) {
       return false;
     } else {
       b0[pos >> 6] |= 1ull << (pos & 63);
@@ -31,133 +43,92 @@ struct IntegerSet {
   }
 
   bool erase(uint32_t pos) {
-    CHECK(0 <= pos && pos < n);
-    return erase0(pos);
+    CHECK(pos < n);
+    if (get(pos)) {
+      if (!(b0[pos >> 6] &= ~(1ull << (pos & 63))) &&
+          !(b1[pos >> 12] &= ~(1ull << (pos >> 6 & 63))) &&
+          !(b2[pos >> 18] &= ~(1ull << (pos >> 12 & 63)))) {
+        b3 &= ~(1ull << (pos >> 18));
+      }
+      --counter;
+      return true;
+    } else {
+      return false;
+    }
   }
-  
+
   int prev(uint32_t pos) const {
-    CHECK(0 <= pos && pos < n);
-    return prev0(pos);
+    CHECK(pos < n);
+    uint32_t u = pos >> 6, v = pos & 63, res;
+    uint64_t mask = b0[u] & ((1ull << v) - 1);
+    if (!mask) {
+      v = u & 63, u >>= 6;
+      mask = b1[u] & ((1ull << v) - 1);
+      if (!mask) {
+        v = u & 63, u >>= 6;
+        mask = b2[u] & ((1ull << v) - 1);
+        if (!mask) {
+          mask = b3 & ((1ull << u) - 1);
+          if (!mask) {
+            return -1;
+          } else {
+            res = 63 ^ __builtin_clzll(mask);
+            res = res << 6 | (63 ^ __builtin_clzll(b2[res]));
+            res = res << 6 | (63 ^ __builtin_clzll(b1[res]));
+            return res << 6 | (63 ^ __builtin_clzll(b0[res]));
+          }
+        } else {
+          res = u << 6 | (63 ^ __builtin_clzll(mask));
+          res = res << 6 | (63 ^ __builtin_clzll(b1[res]));
+          return res << 6 | (63 ^ __builtin_clzll(b0[res]));
+        }
+      } else {
+        res = u << 6 | (63 ^ __builtin_clzll(mask));
+        return res << 6 | (63 ^ __builtin_clzll(b0[res]));
+      }
+    } else {
+      return u << 6 | (63 ^ __builtin_clzll(mask));
+    }
   }
 
   int next(uint32_t pos) const {
-    CHECK(0 <= pos && pos < n);
-    return next0(pos);
+    CHECK(pos < n);
+    uint32_t u = pos >> 6, v = pos & 63, res;
+    uint64_t mask = b0[u] & ((-1ull << v) << 1);
+    if (!mask) {
+      v = u & 63, u >>= 6;
+      mask = b1[u] & ((-1ull << v) << 1);
+      if (!mask) {
+        v = u & 63, u >>= 6;
+        mask = b2[u] & ((-1ull << v) << 1);
+        if (!mask) {
+          mask = b3 & ((-1ull << u) << 1);
+          if (!mask) {
+            return -1;
+          } else {
+            res = __builtin_ctzll(mask);
+            res = res << 6 | __builtin_ctzll(b2[res]);
+            res = res << 6 | __builtin_ctzll(b1[res]);
+            return res << 6 | __builtin_ctzll(b0[res]);
+          }
+        } else {
+          res = u << 6 | __builtin_ctzll(mask);
+          res = res << 6 | __builtin_ctzll(b1[res]);
+          return res << 6 | __builtin_ctzll(b0[res]);
+        }
+      } else {
+        res = u << 6 | __builtin_ctzll(mask);
+        return res << 6 | __builtin_ctzll(b0[res]);
+      }
+    } else {
+      return u << 6 | __builtin_ctzll(mask);
+    }
   }
-  
+
   bool get(uint32_t pos) const {
-    CHECK(0 <= pos && pos < n);
+    CHECK(pos < n);
     return b0[pos >> 6] >> (pos & 63) & 1;
   }
 
   size_t size() const { return counter; }
-
- private:
-  static constexpr uint32_t L0 = B >= 6  ? B - 6  : 0;
-  static constexpr uint32_t L1 = B >= 12 ? B - 12 : 0;
-  static constexpr uint32_t L2 = B >= 18 ? B - 18 : 0;
-
-  uint32_t n = 0;
-  size_t counter = 0;
-  std::vector<uint64_t> b0;
-  std::vector<uint64_t> b1;
-  std::vector<uint64_t> b2;
-  uint64_t b3 = 0;
-
-  static constexpr int msb(uint64_t x) {
-    return x ? 63 ^ __builtin_clzll(x) : -1;
-  }
-
-  static constexpr int lsb(uint64_t x) {
-    return x ? __builtin_ctzll(x) : -1;
-  }
-
-  static constexpr int msb(uint64_t x, uint32_t pos) {
-    return msb(x & ((1ull << pos) - 1));
-  }
-
-  static constexpr int lsb(uint64_t x, uint32_t pos) {
-    return ++pos != 64 ? lsb(x >> pos << pos) : -1;
-  }
-
-  bool erase0(uint32_t pos) {
-    uint32_t u = pos >> 6, v = pos & 63;
-    if (!(b0[u] >> v & 1)) return false;
-    b0[u] ^= 1ull << v;
-    if (!b0[u]) erase1(u);
-    --counter;
-    return true;
-  }
-
-  void erase1(uint32_t pos) {
-    uint32_t u = pos >> 6, v = pos & 63;
-    b1[u] ^= 1ull << v;
-    if (!b1[u]) erase2(u);
-  }
-
-  void erase2(uint32_t pos) {
-    uint32_t u = pos >> 6, v = pos & 63;
-    b2[u] ^= 1ull << v;
-    if (!b2[u]) b3 ^= 1ull << u;
-  }
-
-  int prev0(uint32_t pos) const {
-    uint32_t u = pos >> 6, v = pos & 63;
-    if (b0[u]) {
-      int k = msb(b0[u], v);
-      if (k != -1) return u << 6 | k;
-    }
-    int k = prev1(u);
-    return k != -1 ? k << 6 | msb(b0[k]) : -1;
-  }
-
-  int prev1(uint32_t pos) const {
-    uint32_t u = pos >> 6, v = pos & 63;
-    if (b1[u]) {
-      int k = msb(b1[u], v);
-      if (k != -1) return u << 6 | k;
-    }
-    int k = prev2(u);
-    return k != -1 ? k << 6 | msb(b1[k]) : -1;
-  }
-
-  int prev2(uint32_t pos) const {
-    uint32_t u = pos >> 6, v = pos & 63;
-    if (b2[u]) {
-      int k = msb(b2[u], v);
-      if (k != -1) return u << 6 | k;
-    }
-    int k = b3 ? msb(b3, u) : -1;
-    return k != -1 ? k << 6 | msb(b2[k]) : -1;
-  }
-
-  int next0(uint32_t pos) const {
-    uint32_t u = pos >> 6, v = pos & 63;
-    if (b0[u]) {
-      int k = lsb(b0[u], v);
-      if (k != -1) return u << 6 | k;
-    }
-    int k = next1(u);
-    return k != -1 ? k << 6 | lsb(b0[k]) : -1;
-  }
-
-  int next1(uint32_t pos) const {
-    uint32_t u = pos >> 6, v = pos & 63;
-    if (b1[u]) {
-      int k = lsb(b1[u], v);
-      if (k != -1) return u << 6 | k;
-    }
-    int k = next2(u);
-    return k != -1 ? k << 6 | lsb(b1[k]) : -1;
-  }
-
-  int next2(uint32_t pos) const {
-    uint32_t u = pos >> 6, v = pos & 63;
-    if (b2[u]) {
-      int k = lsb(b2[u], v);
-      if (k != -1) return u << 6 | k;
-    }
-    int k = b3 ? lsb(b3, u) : -1;
-    return k != -1 ? k << 6 | lsb(b2[k]) : -1;
-  }
 };

@@ -5,5 +5,5 @@ namespace debug {
 #ifdef LOCAL
 #define CHECK(expr) assert(expr)
 #else
-#define CHECK(expr)
+#define CHECK(expr) void(0)
 #endif
