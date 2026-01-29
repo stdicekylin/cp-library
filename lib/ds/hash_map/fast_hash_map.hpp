@@ -1,39 +1,23 @@
 #pragma once
 
-template <typename K, typename V, uint32_t N, typename Hasher>
-struct HashMapCore {
+template <typename K, typename V, uint32_t N>
+struct FastHashMap {
   static constexpr uint32_t Size  = 1u << N;
   static constexpr uint32_t Mask  = Size - 1;
-  static constexpr uint32_t Limit = Size >> 7;
   static constexpr uint32_t Shift = 64 - N;
+  static constexpr uint64_t Magic = 11995408973635179863ull;
 
-  size_t counter = 0;
   K key[Size];
   V val[Size];
   std::bitset<Size> used;
-  std::vector<uint32_t> bucket;
-  Hasher hasher;
 
-  HashMapCore() {
-    clear();
-    bucket.reserve(Limit);
+  static constexpr uint32_t get_hash(const K& k) {
+    return (k * Magic >> Shift) & Mask;
   }
 
-  void clear() {
-    if (counter <= Limit) {
-      for (int pos : bucket) {
-        used[pos] = 0;
-      }
-    } else {
-      used.reset();
-    }
-    bucket.clear();
-    counter = 0;
-  }
+  FastHashMap() { clear(); }
 
-  uint32_t get_hash(const K& k) const {
-    return (hasher(k) >> Shift) & Mask;
-  }
+  void clear() { used.reset(); }
 
   V& operator[](const K& k) {
     uint32_t h = get_hash(k);
@@ -41,9 +25,6 @@ struct HashMapCore {
       if (!used[h]) {
         used[h] = 1;
         key[h] = k;
-        if (++counter <= Limit) {
-          bucket.push_back(h);
-        }
         return val[h] = V{};
       }
       if (key[h] == k) {
@@ -61,6 +42,4 @@ struct HashMapCore {
       ++h &= Mask;
     }
   }
-
-  size_t size() const { return counter; }
 };

@@ -16,7 +16,7 @@ struct SparseTable {
   SparseTable(It first, It last) { build(first, last); }
 
   template <typename F>
-  SparseTable(int _n, F func) { build(_n, func); }
+  SparseTable(int _n, F&& func) { build(_n, func); }
 
   template <typename It>
   void build(It first, It last) {
@@ -47,7 +47,7 @@ struct SparseTable {
   }
 
   template <typename F>
-  void build(int _n, F func) {
+  void build(int _n, F&& func) {
     CHECK(_n >= 0);
     std::vector<Info> vec(_n);
     for (int i = 0; i < _n; ++i) {
