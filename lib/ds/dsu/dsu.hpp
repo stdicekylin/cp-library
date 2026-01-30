@@ -32,9 +32,11 @@ struct DSU {
     x = find(x);
     y = find(y);
     if (x == y) return false;
-    if (fa[x] > fa[y]) std::swap(x, y);
-    fa[x] += fa[y];
-    fa[y] = x;
+    if (fa[x] < fa[y]) {
+      fa[x] += fa[y], fa[y] = x;
+    } else {
+      fa[y] += fa[x], fa[x] = y;
+    }
     return true;
   }
 

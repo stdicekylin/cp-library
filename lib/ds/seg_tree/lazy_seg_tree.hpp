@@ -6,7 +6,7 @@
 template <typename T>
 struct LazySegTree {
   using Info = typename T::Info;
-  using Tag = typename T::Tag;
+  using Tag  = typename T::Tag;
 
   int n = 0;
   int m = 0;
@@ -18,8 +18,11 @@ struct LazySegTree {
   LazySegTree() = default;
   explicit LazySegTree(int _m) { build(_m); }
 
+  template <typename F>
+  LazySegTree(int _m, F&& func) { build(_m, func); }
+
   template <typename It>
-  LazySegTree(It first, It last) { bbuild(first, last); }
+  LazySegTree(It first, It last) { build(first, last); }
 
   void build(int _m) {
     m = _m;
@@ -30,6 +33,20 @@ struct LazySegTree {
     t.assign(n << 1, T::id());
     tag.assign(n << 1, T::tag_id());
     has_tag.assign(n << 1, 0);
+  }
+
+  template <typename F>
+  void build(int _m, F&& func) {
+    m = _m;
+    CHECK(m >= 0);
+    n = 1;
+    while (n < m) n <<= 1;
+    h = my_bit::__lg(n);
+    t.assign(n << 1, T::id());
+    tag.assign(n << 1, T::tag_id());
+    has_tag.assign(n << 1, 0);
+    for (int i = 0; i < m; ++i) t[n + i] = func(i);
+    for (int i = n - 1; i > 0; --i) push_up(i);
   }
 
   template <typename It>
@@ -79,9 +96,23 @@ struct LazySegTree {
     for (int i = h; i > cl; --i) push_down(l >> i);
     for (int i = std::max(cl, w); i > cr; --i) push_down(r >> i);
 
-    for (int L = l, R = r; L < R; L >>= 1, R >>= 1) {
-      if (L & 1) apply_node(L++, v);
-      if (R & 1) apply_node(--R, v);
+    int L = l, R = r;
+    int k = my_bit::__lg(--L ^ R);
+
+    int cL = L;
+    L = ~L & ((1 << k) - 1);
+    while (L > 0) {
+      int i = my_bit::countr_zero(L);
+      L ^= 1 << i;
+      apply_node(cL >> i ^ 1, v);
+    }
+
+    int cR = R;
+    R &= (1 << k) - 1;
+    while (R > 0) {
+      int i = my_bit::__lg(R);
+      R ^= 1 << i;
+      apply_node(cR >> i ^ 1, v);
     }
 
     for (int i = cl + 1; i <= w; ++i) push_up(l >> i);

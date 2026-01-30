@@ -18,6 +18,9 @@ struct TagSegTree {
   TagSegTree() = default;
   explicit TagSegTree(int _m) { build(_m); }
 
+  template <typename F>
+  TagSegTree(int _m, F&& func) { build(_m, func); }
+
   template <typename It>
   TagSegTree(It first, It last) { build(first, last); }
 
@@ -30,6 +33,19 @@ struct TagSegTree {
     val.assign(n, T::id());
     tag.assign(n << 1, T::tag_id());
     has_tag.assign(n << 1, 0);
+  }
+
+  template <typename F>
+  void build(int _m, F&& func) {
+    m = _m;
+    CHECK(m >= 0);
+    n = 1;
+    while (n < m) n <<= 1;
+    h = my_bit::__lg(n);
+    val.assign(n, T::id());
+    tag.assign(n << 1, T::tag_id());
+    has_tag.assign(n << 1, 0);
+    for (int i = 0; i < m; ++i) val[i] = func(i);
   }
 
   template <typename It>
@@ -89,9 +105,22 @@ struct TagSegTree {
     for (int i = h; i > cl; --i) push_down(l >> i);
     for (int i = std::max(cl, w); i > cr; --i) push_down(r >> i);
 
-    for (int L = l, R = r; L < R; L >>= 1, R >>= 1) {
-      if (L & 1) apply_node(L++, v);
-      if (R & 1) apply_node(--R, v);
+    w = my_bit::__lg(--l ^ r);
+
+    cl = l;
+    l = ~l & ((1 << w) - 1);
+    while (l > 0) {
+      int i = my_bit::countr_zero(l);
+      l ^= 1 << i;
+      apply_node(cl >> i ^ 1, v);
+    }
+
+    cr = r;
+    r &= (1 << w) - 1;
+    while (r > 0) {
+      int i = my_bit::__lg(r);
+      r ^= 1 << i;
+      apply_node(cr >> i ^ 1, v);
     }
   }
 

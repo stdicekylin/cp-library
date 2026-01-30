@@ -48,13 +48,12 @@ void solve_main() {
   int n, q;
   io >> n >> q;
 
-  vector<RangeAffineRangeSum::Info> vec(n);
-  for (auto& x : vec) {
-    io >> x.sum;
-    x.len = 1;
-  }
-
-  LazySegTree<RangeAffineRangeSum> t(vec.begin(), vec.end());
+  LazySegTree<RangeAffineRangeSum> t(n, [&](int i) {
+    RangeAffineRangeSum::Info info;
+    io >> info.sum;
+    info.len = 1;
+    return info;
+  });
 
   while (q--) {
     bool op;
