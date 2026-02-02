@@ -1,7 +1,7 @@
 // https://judge.yosupo.jp/problem/predecessor_problem
 
 #include <bits/stdc++.h>
-#include "lib/misc/fast_io.hpp"
+#include "lib/utils/fast_io.hpp"
 #include "lib/ds/set/integer_set.hpp"
 using namespace std;
 

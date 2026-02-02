@@ -75,21 +75,19 @@ struct TagSegTree {
     val[x - n] = v;
   }
 
-  Info get(int x) {
+  Info get(int x) const {
     CHECK(0 <= x && x < m);
+    Info res = val[x];
     x += n;
-    for (int i = h; i > 0; --i) push_down(x >> i);
-    T::apply(val[x - n], tag[x]);
-    tag[x] = T::tag_id();
-    return val[x - n];
+    for (int i = 0; i <= h; ++i) T::apply(res, tag[x >> i]);
+    return res;
   }
 
-  Info apply(int x, const Tag& v) {
+  Info& get_ref(int x) {
     CHECK(0 <= x && x < m);
     x += n;
     for (int i = h; i > 0; --i) push_down(x >> i);
     T::apply(val[x - n], tag[x]);
-    T::apply(val[x - n], v);
     tag[x] = T::tag_id();
     return val[x - n];
   }

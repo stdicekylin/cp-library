@@ -1,7 +1,7 @@
 #pragma once
 
 #include "lib/debug.hpp"
-#include "lib/misc/my_type_traits.hpp"
+#include "lib/utils/my_type_traits.hpp"
 
 #ifdef __unix__
 #ifndef DISABLE_MMAP
@@ -20,17 +20,18 @@ struct FastInput {
 
   FILE* file;
   char* buf;
-  const char* cur;
-  const char* end;
+  char* cur;
+  char* end;
+  size_t map_size;
 
   explicit FastInput(FILE* _file = stdin) : file(_file) {
 #ifdef ENABLE_MMAP
     struct stat st;
     int fd = fileno(file);
     fstat(fd, &st);
-    size_t map_size = static_cast<size_t>(st.st_size);
-    cur = static_cast<const char*>(
-        mmap(nullptr, map_size + Offset, PROT_READ, MAP_PRIVATE, fd, 0));
+    map_size = st.st_size;
+    buf = cur = static_cast<char*>(
+        mmap(nullptr, map_size, PROT_READ, MAP_PRIVATE, fd, 0));
     end = cur + map_size;
 #else
     cur = buf = new char[BufSize + Offset];
@@ -39,16 +40,20 @@ struct FastInput {
 #endif
   }
 
-#ifndef ENABLE_MMAP
+#ifdef ENABLE_MMAP
+  ~FastInput() { munmap(buf, map_size); }
+#else
   ~FastInput() { delete[] buf; }
 #endif
 
 #ifdef ENABLE_MMAP
-  void ensure(int need) { (void)need; }
+  template <int N>
+  void ensure() { (void)N; }
 #else
-  void ensure(int need) {
+  template <int N>
+  void ensure() {
     int rem = end - cur;
-    if (__builtin_expect(rem >= need, true)) return;
+    if (__builtin_expect(rem >= N, true)) return;
     if (rem > 0 && cur != buf) memmove(buf, cur, rem);
     cur = buf;
     end = buf + rem + fread(buf + rem, 1, BufSize - rem, file);
@@ -57,10 +62,10 @@ struct FastInput {
 #endif
 
   void skip_space() {
-    ensure(1);
+    ensure<1>();
     while (__builtin_expect(*cur < 33, false)) {
       ++cur;
-      ensure(1);
+      ensure<1>();
       CHECK(cur < end);
     }
   }
@@ -68,20 +73,18 @@ struct FastInput {
   void read(bool& x) {
     CHECK(*cur == '0' || *cur == '1');
     x = (*cur++ == '1');
-    ensure(1);
+    ensure<1>();
     CHECK(*cur <= 32);
     ++cur;
   }
 
-  template <typename T>
+  template <typename T, int N = std::numeric_limits<T>::digits10 / 8>
   std::enable_if_t<my_type_traits::is_unsigned_v<T>, void> read(T& x) {
-    ensure(40);
+    ensure<40>();
     CHECK(*cur >= '0' && *cur <= '9');
     x = *cur++ & 15;
 
-    static constexpr int count8 = std::numeric_limits<T>::digits10 / 8;
-
-    for (int i = 0; i < count8; ++i) {
+    for (int i = 0; i < N; ++i) {
       uint64_t v;
       memcpy(&v, cur, 8);
       if ((v ^= 0x3030303030303030) & 0xf0f0f0f0f0f0f0f0) break;
@@ -96,22 +99,26 @@ struct FastInput {
       CHECK(*cur <= '9');
       x = x * 10 + (*cur & 15);
     }
+
     CHECK(*cur <= 32);
     ++cur;
   }
 
-  template <typename T>
+  template <typename T, int N = std::numeric_limits<T>::digits10 / 8>
   std::enable_if_t<my_type_traits::is_signed_v<T>, void> read(T& x) {
+    using U = typename my_type_traits::make_unsigned_t<T>;
+
     bool neg = (*cur == '-');
     cur += neg;
-    my_type_traits::make_unsigned_t<T> v;
-    read(v);
+
+    U v;
+    read<U, N>(v);
     x = static_cast<T>(neg ? -v : v);
   }
 
   void read(char& c) {
     c = *cur++;
-    ensure(1);
+    ensure<1>();
     CHECK(*cur <= 32);
     ++cur;
   }
@@ -119,14 +126,14 @@ struct FastInput {
   void read(std::string& s) {
     CHECK(*cur > 32);
 #ifdef ENABLE_MMAP
-    const char* first = cur;
+    char* first = cur;
     while (*cur > 32) ++cur;
     s.assign(first, cur);
     ++cur;
 #else
     s.clear();
     while (true) {
-      const char* last = cur;
+      char* last = cur;
       while (last < end && *last > 32) ++last;
       if (last < end) {
         s.append(cur, last);
@@ -135,7 +142,7 @@ struct FastInput {
       } else {
         s.append(cur, last);
         cur = end;
-        ensure(1);
+        ensure<1>();
       }
     }
 #endif
@@ -152,7 +159,7 @@ struct FastInput {
     skip_space();
     while (*cur > 32) {
       *s++ = *cur++;
-      ensure(1);
+      ensure<1>();
     }
     *s = 0;
     ++cur;
@@ -168,7 +175,7 @@ struct FastOutput {
   FILE* file;
   char* buf;
   char* cur;
-  const char* end;
+  char* end;
   char table[40000];
 
   explicit FastOutput(FILE* _file = stdout) : file(_file) {

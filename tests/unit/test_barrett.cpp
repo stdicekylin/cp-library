@@ -1,9 +1,8 @@
 #include <bits/stdc++.h>
-using namespace std;
-
-#include "lib/misc/timer.hpp"
+#include "lib/utils/timer.hpp"
 #include "lib/math/modular/barrett64.hpp"
 #include "lib/math/modular/barrett32.hpp"
+using namespace std;
 
 mt19937_64 rnd_64(chrono::steady_clock::now().time_since_epoch().count());
 mt19937 rnd_32(chrono::steady_clock::now().time_since_epoch().count());

@@ -1,7 +1,7 @@
 // https://judge.yosupo.jp/problem/unionfind
 
 #include <bits/stdc++.h>
-#include "lib/misc/fast_io.hpp"
+#include "lib/utils/fast_io.hpp"
 #include "lib/ds/dsu/dsu.hpp"
 using namespace std;
 

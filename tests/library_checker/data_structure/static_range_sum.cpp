@@ -1,34 +1,37 @@
-// https://judge.yosupo.jp/problem/associative_array
+// https://judge.yosupo.jp/problem/static_range_sum
 
+#pragma GCC optimize(3)
 #include <bits/stdc++.h>
 #include "lib/utils/fast_io.hpp"
-#include "lib/ds/hash_map/fast_hash_map.hpp"
 using namespace std;
 
 using ll  = long long;
 using ull = unsigned long long;
 
-FastIO<1 << 20, 1 << 22> io;
+FastIO<1 << 20, 1 << 20> io;
 
-constexpr int N = 2e5 + 5;
+constexpr int N = 5e5 + 5;
 
-FastHashMap<uint64_t, uint64_t, 20> mp;
+uint64_t sum[N];
 
 void solve_main() {
-  int q;
-  io >> q;
+  int n, q;
+  io >> n >> q;
 
+  uint32_t v;
+  for (int i = 1; i <= n; ++i) {
+    io >> v;
+    sum[i] = v;
+  }
+
+  partial_sum(sum + 1, sum + n + 1, sum + 1);
+
+  uint32_t l, r;
   while (q--) {
-    bool op;
-    uint64_t k;
-    io >> op >> k;
-    if (op == 0) {
-      uint64_t v;
-      io >> v;
-      mp[k] = v;
-    } else {
-      io << mp[k] << '\n';
-    }
+    io.in->skip_space();
+    io.in->read<uint32_t, 0>(l);
+    io.in->read<uint32_t, 0>(r);
+    io << sum[r] - sum[l] << '\n';
   }
 }
 

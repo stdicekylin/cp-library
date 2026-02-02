@@ -1,8 +1,7 @@
 #include <bits/stdc++.h>
-using namespace std;
-
-#include "lib/misc/timer.hpp"
+#include "lib/utils/timer.hpp"
 #include "lib/ds/seg_tree/lazy_seg_tree.hpp"
+using namespace std;
 
 using ll  = long long;
 using ull = unsigned long long;

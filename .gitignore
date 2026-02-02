@@ -3,7 +3,8 @@ test.cpp
 *.in
 *.out
 *.zip
+*.ans
 *.swp
 submit*
-generator*
+gen*
 template

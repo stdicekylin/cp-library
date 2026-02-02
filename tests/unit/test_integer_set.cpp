@@ -1,8 +1,7 @@
 #include <bits/stdc++.h>
-using namespace std;
-
-#include "lib/misc/timer.hpp"
+#include "lib/utils/timer.hpp"
 #include "lib/ds/set/integer_set.hpp"
+using namespace std;
 
 mt19937 rnd(chrono::steady_clock::now().time_since_epoch().count());
 

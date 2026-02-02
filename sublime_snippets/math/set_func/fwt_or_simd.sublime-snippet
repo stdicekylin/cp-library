@@ -1,9 +1,9 @@
 <snippet>
   <content><![CDATA[
-lib/misc/y_combinator.hpp
+lib/math/set_func/fwt_or_simd.hpp
 ]]></content>
   <!-- Optional: Set a tabTrigger to define how to trigger the snippet -->
-  <tabTrigger>lib/misc/y_combinator.hpp</tabTrigger>
+  <tabTrigger>lib/math/set_func/fwt_or_simd.hpp</tabTrigger>
   <!-- Optional: Set a scope to limit where the snippet will trigger -->
   <scope>source.c++</scope>
 </snippet>

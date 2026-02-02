@@ -1,7 +1,7 @@
 // https://judge.yosupo.jp/problem/many_aplusb_128bit
 
 #include <bits/stdc++.h>
-#include "lib/misc/fast_io.hpp"
+#include "lib/utils/fast_io.hpp"
 using namespace std;
 
 using ll  = long long;

@@ -1,9 +1,9 @@
 <snippet>
   <content><![CDATA[
-lib/misc/timer.hpp
+lib/utils/my_type_traits.hpp
 ]]></content>
   <!-- Optional: Set a tabTrigger to define how to trigger the snippet -->
-  <tabTrigger>lib/misc/timer.hpp</tabTrigger>
+  <tabTrigger>lib/utils/my_type_traits.hpp</tabTrigger>
   <!-- Optional: Set a scope to limit where the snippet will trigger -->
   <scope>source.c++</scope>
 </snippet>

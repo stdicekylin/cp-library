@@ -2,7 +2,7 @@
 
 #include <bits/stdc++.h>
 #pragma GCC optimize(3)
-#include "lib/misc/fast_io.hpp"
+#include "lib/utils/fast_io.hpp"
 #include "lib/ds/seg_tree/tag_seg_tree.hpp"
 using namespace std;
 
@@ -57,25 +57,31 @@ void solve_main() {
     int x;
     io >> op;
     if (op == '1') {
-      io >> l >> r >> x;
+      io.in->read<uint32_t, 0>(l);
+      io.in->read<uint32_t, 0>(r);
+      io >> x;
       --l;
       t.apply(l, r, {x, -inf, x, -inf});
     } else if (op == '2') {
-      io >> l >> r >> x;
+      io.in->read<uint32_t, 0>(l);
+      io.in->read<uint32_t, 0>(r);
+      io >> x;
       --l;
       t.apply(l, r, {-x, 0, -x, 0});
     } else if (op == '3') {
-      io >> l >> r >> x;
+      io.in->read<uint32_t, 0>(l);
+      io.in->read<uint32_t, 0>(r);
+      io >> x;
       --l;
       t.apply(l, r, {-inf, x, -inf, x});
     } else if (op == '4') {
-      io >> x;
-      --x;
-      io << t.get(x).x << '\n';
+      io.in->read<uint32_t, 0>(l);
+      --l;
+      io << t.get(l).x << '\n';
     } else {
-      io >> x;
-      --x;
-      io << t.get(x).hx << '\n';
+      io.in->read<uint32_t, 0>(l);
+      --l;
+      io << t.get(l).hx << '\n';
     }
   }
 }

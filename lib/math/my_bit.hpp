@@ -42,4 +42,16 @@ constexpr std::enable_if_t<(sizeof(T) > 4), int> popcount(T x) {
   return __builtin_popcountll(static_cast<uint64_t>(x));
 }
 
+template <uint32_t Max, uint32_t N = 0, typename F>
+std::enable_if_t<(N >= Max), void> bit_width_const(uint64_t n, F&& func) {}
+
+template <uint32_t Max, uint32_t N = 0, typename F>
+std::enable_if_t<(N < Max), void> bit_width_const(uint64_t n, F&& func) {
+  if (n <= 1ull << N) {
+    func.template operator()<N>();
+  } else {
+    bit_width_const<Max, N + 1>(n, func);
+  }
+}
+
 }  // namespace my_bit

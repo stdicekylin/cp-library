@@ -1,8 +1,8 @@
-// https://judge.yosupo.jp/problem/range_affine_range_sum
+// https://judge.yosupo.jp/problem/range_affine_point_get
 
 #include <bits/stdc++.h>
 #include "lib/utils/fast_io.hpp"
-#include "lib/ds/seg_tree/lazy_seg_tree.hpp"
+#include "lib/ds/seg_tree/tag_seg_tree.hpp"
 using namespace std;
 
 using ll  = long long;
@@ -17,21 +17,15 @@ inline constexpr uint32_t reduce(uint32_t x) {
   return x - (x >= P) * P;
 }
 
-struct RangeAffineRangeSum {
-  struct Info {
-    uint32_t sum, len;
-  };
+struct RangeAffinePointGet {
+  using Info = uint32_t;
 
   struct Tag {
     uint32_t b, c;
   };
 
-  static constexpr Info id() noexcept { return {0, 0}; };
+  static constexpr Info id() noexcept { return 0; };
   static constexpr Tag tag_id() noexcept { return {1, 0}; };
-
-  static constexpr Info op(const Info& lhs, const Info& rhs) {
-    return {reduce(lhs.sum + rhs.sum), lhs.len + rhs.len};
-  }
 
   static constexpr void compose(Tag& lhs, const Tag& rhs) {
     lhs.b = static_cast<uint64_t>(lhs.b) * rhs.b % P;
@@ -39,8 +33,7 @@ struct RangeAffineRangeSum {
   }
 
   static constexpr void apply(Info& info, const Tag& tag) {
-    info.sum = (static_cast<uint64_t>(tag.b) * info.sum +
-                static_cast<uint64_t>(tag.c) * info.len) % P;
+    info = (static_cast<uint64_t>(tag.b) * info + tag.c) % P;
   }
 };
 
@@ -48,23 +41,25 @@ void solve_main() {
   int n, q;
   io >> n >> q;
 
-  LazySegTree<RangeAffineRangeSum> t(n, [&](int i) {
-    RangeAffineRangeSum::Info info;
-    io >> info.sum;
-    info.len = 1;
-    return info;
+  TagSegTree<RangeAffinePointGet> t(n, [&](int i) {
+    uint32_t v;
+    io >> v;
+    return v;
   });
 
   while (q--) {
     bool op;
-    uint32_t l, r;
-    io >> op >> l >> r;
+    io >> op;
     if (op == 0) {
-      uint32_t b, c;
+      uint32_t l, r, b, c;
+      io.in->read<uint32_t, 0>(l);
+      io.in->read<uint32_t, 0>(r);
       io >> b >> c;
       t.apply(l, r, {b, c});
     } else {
-      io << t.prod(l, r).sum << '\n';
+      uint32_t i;
+      io.in->read<uint32_t, 0>(i);
+      io << t.get(i) << '\n';
     }
   }
 }
