@@ -18,7 +18,7 @@ struct Vec {
     using value_type = T;                                \
     using type = __attribute__((vector_size(N))) T;      \
     static constexpr int lanes = N / sizeof(T);          \
-  };
+  }
 
 USE_SIMD(int8_t, 32);
 USE_SIMD(uint8_t, 32);

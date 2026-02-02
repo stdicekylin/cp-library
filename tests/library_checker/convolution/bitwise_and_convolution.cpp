@@ -19,19 +19,19 @@ void solve_main() {
   io >> n;
   m = 1 << n;
 
-  vector<uint32_t> a(m), b(m), c(m);
+  vector<uint32_t> a(m), b(m);
   for (auto& x : a) io >> x;
   for (auto& x : b) io >> x;
 
   my_simd::fwt_and<P>(a.data(), m);
   my_simd::fwt_and<P>(b.data(), m);
   for (int i = 0; i < m; ++i) {
-    c[i] = static_cast<uint64_t>(a[i]) * b[i] % P;
+    a[i] = static_cast<uint64_t>(a[i]) * b[i] % P;
   }
-  my_simd::ifwt_and<P>(c.data(), m);
+  my_simd::ifwt_and<P>(a.data(), m);
 
-  for (int i = 0; i < m; ++i) {
-    io << c[i] << ' ';
+  for (auto& x : a) {
+    io << x << ' ';
   }
 }
 

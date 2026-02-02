@@ -19,16 +19,16 @@ void solve_main() {
   io >> n;
   m = 1 << n;
 
-  vector<uint32_t> a(m), b(m), c(m);
+  vector<uint32_t> a(m), b(m);
   for (auto& x : a) io >> x;
   for (auto& x : b) io >> x;
 
   my_simd::fwt_xor<P>(a.data(), m);
   my_simd::fwt_xor<P>(b.data(), m);
   for (int i = 0; i < m; ++i) {
-    c[i] = static_cast<uint64_t>(a[i]) * b[i] % P;
+    a[i] = static_cast<uint64_t>(a[i]) * b[i] % P;
   }
-  my_simd::fwt_xor<P>(c.data(), m);
+  my_simd::fwt_xor<P>(a.data(), m);
 
   auto qpow = [&](uint64_t x, uint32_t y, uint64_t k = 1) -> uint32_t {
     for (; y; y >>= 1, x = x * x % P) {
@@ -38,9 +38,9 @@ void solve_main() {
   };
 
   uint32_t inv = qpow(m, P - 2);
-  for (int i = 0; i < m; ++i) {
-    c[i] = static_cast<uint64_t>(c[i]) * inv % P;
-    io << c[i] << ' ';
+  for (auto& x : a) {
+    x = static_cast<uint64_t>(x) * inv % P;
+    io << x << ' ';
   }
 }
 

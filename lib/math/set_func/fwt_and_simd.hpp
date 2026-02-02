@@ -11,7 +11,8 @@ std::enable_if_t<(N <= 1), void> fwt_and(It f) {}
 
 template <uint32_t P, int N, typename It>
 std::enable_if_t<(N > 1), void> fwt_and(It f) {
-  auto reduce = [&](uint32_t x) -> uint32_t {
+  auto add = [&](uint32_t x, uint32_t y) -> uint32_t {
+    x += y;
     return std::min(x, x - P);
   };
 
@@ -21,7 +22,7 @@ std::enable_if_t<(N > 1), void> fwt_and(It f) {
   fwt_and<P, len>(f + len);
 
   for (int i = 0; i < len; ++i) {
-    f[i] = reduce(f[i] + f[i + len]);
+    f[i] = add(f[i], f[i + len]);
   }
 }
 
@@ -30,8 +31,9 @@ std::enable_if_t<(N <= 1), void> ifwt_and(It f) {}
 
 template <uint32_t P, int N, typename It>
 std::enable_if_t<(N > 1), void> ifwt_and(It f) {
-  auto reduce = [&](uint32_t x) -> uint32_t {
-    return std::min(x, x - P);
+  auto sub = [&](uint32_t x, uint32_t y) -> uint32_t {
+    x -= y;
+    return std::min(x, x + P);
   };
 
   static constexpr int len = N >> 1;
@@ -40,7 +42,7 @@ std::enable_if_t<(N > 1), void> ifwt_and(It f) {
   ifwt_and<P, len>(f + len);
 
   for (int i = 0; i < len; ++i) {
-    f[i] = reduce(f[i] + P - f[i + len]);
+    f[i] = sub(f[i], f[i + len]);
   }
 }
 
