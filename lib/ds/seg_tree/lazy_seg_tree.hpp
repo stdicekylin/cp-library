@@ -1,6 +1,6 @@
 #pragma once
 
-#include "lib/debug.hpp"
+#include "lib/utils/debug.hpp"
 #include "lib/math/my_bit.hpp"
 
 template <typename T>
@@ -18,7 +18,8 @@ struct LazySegTree {
   LazySegTree() = default;
   explicit LazySegTree(int _m) { build(_m); }
 
-  LazySegTree(int _m, auto&& func) { build(_m, func); }
+  template <typename F>
+  LazySegTree(int _m, F&& func) { build(_m, func); }
 
   template <typename It>
   LazySegTree(It first, It last) { build(first, last); }
@@ -34,7 +35,8 @@ struct LazySegTree {
     has_tag.assign(n << 1, 0);
   }
 
-  void build(int _m, auto&& func) {
+  template <typename F>
+  void build(int _m, F&& func) {
     m = _m;
     CHECK(m >= 0);
     n = 1;
@@ -117,6 +119,8 @@ struct LazySegTree {
     for (int i = cr + 1; i <= w; ++i) push_up(r >> i);
     for (l >>= w + 1; l > 0; l >>= 1) push_up(l);
   }
+
+  void apply_all(const Tag& v) { apply_node(1, v); }
 
   Info prod(int l, int r) {
     CHECK(0 <= l && l <= r && r <= m);

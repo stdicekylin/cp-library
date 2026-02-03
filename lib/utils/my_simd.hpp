@@ -56,8 +56,8 @@ void vector_store(It ptr, const Vec& v) {
   memcpy(ptr, &v, sizeof(v));
 }
 
-template <typename T, typename F>
-void for_each(typename T::type& v, F&& func) {
+template <typename T>
+void for_each(typename T::type& v, auto&& func) {
   typename T::value_type a[T::lanes];
   vector_store(a, v);
 #pragma GCC unroll 4

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "lib/debug.hpp"
+#include "lib/utils/debug.hpp"
 
 template <typename T>
 struct FenwickTreeRange {

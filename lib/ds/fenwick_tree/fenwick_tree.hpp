@@ -1,12 +1,14 @@
 #pragma once
 
-#include "lib/debug.hpp"
+#include "lib/utils/debug.hpp"
 
 template <typename T>
 struct FenwickTree {
+  using Info = typename T::Info;
+
   int n = 0;
   size_t limit = 0;
-  std::vector<T> t;
+  std::vector<Info> t;
   std::vector<int> bucket;
 
   FenwickTree() = default;
@@ -17,40 +19,40 @@ struct FenwickTree {
     n = _n;
     limit = n / 20;
     bucket.reserve(limit);
-    t.assign(n + 1, T{});
+    t.assign(n + 1, T::id());
   }
 
-  void add(int x, const T& v) {
+  void add(int x, const Info& v) {
     CHECK(0 <= x && x < n);
     if (bucket.size() < limit) bucket.push_back(x);
     for (++x; x <= n; x += x & -x) {
-      t[x] += v;
+      t[x] = T::op(t[x], v);
     }
   }
 
-  T sum(int x) const {
+  Info sum(int x) const {
     CHECK(0 <= x && x <= n);
-    T res{};
+    Info res = T::id();
     for (; x > 0; x &= x - 1) {
-      res += t[x];
+      res = T::op(res, t[x]);
     }
     return res;
   }
 
-  T sum(int l, int r) const {
+  Info sum(int l, int r) const {
     CHECK(0 <= l && l <= r && r <= n);
-    return sum(r) - sum(l);
+    return T::op(sum(r), T::inv(sum(l)));
   }
 
   void reset() {
     if (bucket.size() < limit) {
       for (int x : bucket) {
         for (++x; x <= n; x += x & -x) {
-          t[x] = T{};
+          t[x] = T::id();
         }
       }
     } else {
-      std::fill(t.begin(), t.end(), T{});
+      std::fill(t.begin(), t.end(), T::id());
     }
     bucket.clear();
   }

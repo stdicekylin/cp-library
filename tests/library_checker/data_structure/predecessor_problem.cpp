@@ -8,17 +8,17 @@ using namespace std;
 using ll  = long long;
 using ull = unsigned long long;
 
-FastIO<1 << 20, 1 << 21> io;
+FastIO<1 << 20, 1 << 20> io;
 
 constexpr int N = 1e7 + 100;
 
-int n, q;
-
 IntegerSet<24> s;
-string t;
 
 void solve_main() {
+  int n, q;
   io >> n >> q;
+
+  string t;
   io >> t;
 
   auto ptr = t.data();

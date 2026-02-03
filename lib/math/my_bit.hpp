@@ -40,8 +40,8 @@ constexpr int popcount(T x) {
   }
 }
 
-template <uint32_t Max, uint32_t N = 0>
-void bit_width_const(uint64_t n, auto&& func) {
+template <uint32_t Max, uint32_t N = 0, typename F>
+void bit_width_const(uint64_t n, F&& func) {
   if constexpr (N <= Max) {
     if (n <= 1ull << N) {
       func.template operator()<N>();

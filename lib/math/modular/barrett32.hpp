@@ -1,6 +1,6 @@
 #pragma once
 
-#include "lib/debug.hpp"
+#include "lib/utils/debug.hpp"
 
 struct Barrett32 {
   uint32_t mod, inv;

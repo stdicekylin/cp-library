@@ -1,6 +1,6 @@
 #pragma once
 
-#include "lib/debug.hpp"
+#include "lib/utils/debug.hpp"
 #include "lib/math/my_bit.hpp"
 
 template <typename T>
@@ -29,7 +29,7 @@ struct SparseTable {
       return;
     }
 
-    h = my_bit::__lg(n) + 1;
+    h = internal::__lg(n) + 1;
     st.resize(h);
 
     st[0].resize(n);
@@ -60,7 +60,7 @@ struct SparseTable {
   Info prod(int l, int r) const {
     CHECK(0 <= l && l <= r && r <= n);
     if (l == r) return T::id();
-    int k = my_bit::__lg(r - l);
+    int k = internal::__lg(r - l);
     return T::op(st[k][l], st[k][r - (1 << k)]);
   }
 };

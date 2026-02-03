@@ -1,6 +1,6 @@
 #pragma once
 
-#include "lib/debug.hpp"
+#include "lib/utils/debug.hpp"
 
 template <uint32_t B = 24>
 struct IntegerSet {

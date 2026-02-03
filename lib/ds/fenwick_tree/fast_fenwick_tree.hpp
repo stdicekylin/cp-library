@@ -1,13 +1,15 @@
 #pragma once
 
-#include "lib/debug.hpp"
+#include "lib/utils/debug.hpp"
 
 // Based on https://en.algorithmica.org/hpc/data-structures/segment-trees/#fenwick-trees
 template <typename T>
 struct FastFenwickTree {
+  using Info = typename T::Info;
+
   int n = 0;
   size_t limit = 0;
-  std::vector<T> t;
+  std::vector<Info> t;
   std::vector<int> bucket;
 
   static constexpr int hole(int x) {
@@ -22,40 +24,40 @@ struct FastFenwickTree {
     n = _n;
     limit = n / 20;
     bucket.reserve(limit);
-    t.assign(hole(n) + 1, T{});
+    t.assign(hole(n) + 1, T::id());
   }
 
-  void add(int x, const T& v) {
+  void add(int x, const Info& v) {
     CHECK(0 <= x && x < n);
     if (bucket.size() < limit) bucket.push_back(x);
     for (++x; x <= n; x += x & -x) {
-      t[hole(x)] += v;
+      t[hole(x)] = T::op(t[hole(x)], v);
     }
   }
 
-  T sum(int x) const {
+  Info sum(int x) const {
     CHECK(0 <= x && x <= n);
-    T res{};
+    Info res = T::id();
     for (; x > 0; x &= x - 1) {
-      res += t[hole(x)];
+      res = T::op(res, t[hole(x)]);
     }
     return res;
   }
 
-  T sum(int l, int r) const {
+  Info sum(int l, int r) const {
     CHECK(0 <= l && l <= r && r <= n);
-    return sum(r) - sum(l);
+    return T::op(sum(r), T::inv(sum(l)));
   }
 
   void reset() {
     if (bucket.size() < limit) {
       for (int x : bucket) {
         for (++x; x <= n; x += x & -x) {
-          t[hole(x)] = T{};
+          t[hole(x)] = T::id();
         }
       }
     } else {
-      std::fill(t.begin(), t.end(), T{});
+      std::fill(t.begin(), t.end(), T::id());
     }
     bucket.clear();
   }

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "lib/debug.hpp"
+#include "lib/utils/debug.hpp"
 #include "lib/math/my_bit.hpp"
 
 template <typename T>
@@ -18,7 +18,8 @@ struct TagSegTree {
   TagSegTree() = default;
   explicit TagSegTree(int _m) { build(_m); }
 
-  TagSegTree(int _m, auto&& func) { build(_m, func); }
+  template <typename F>
+  TagSegTree(int _m, F&& func) { build(_m, func); }
 
   template <typename It>
   TagSegTree(It first, It last) { build(first, last); }
@@ -34,7 +35,8 @@ struct TagSegTree {
     has_tag.assign(n << 1, 0);
   }
 
-  void build(int _m, auto&& func) {
+  template <typename F>
+  void build(int _m, F&& func) {
     m = _m;
     CHECK(m >= 0);
     n = 1;

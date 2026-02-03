@@ -1,6 +1,6 @@
 #pragma once
 
-#include "lib/debug.hpp"
+#include "lib/utils/debug.hpp"
 #include "lib/utils/my_type_traits.hpp"
 
 #ifdef __unix__

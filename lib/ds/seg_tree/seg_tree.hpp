@@ -1,6 +1,6 @@
 #pragma once
 
-#include "lib/debug.hpp"
+#include "lib/utils/debug.hpp"
 #include "lib/math/my_bit.hpp"
 
 template <typename T>
@@ -14,7 +14,8 @@ struct SegTree {
   SegTree() = default;
   explicit SegTree(int _m) { build(_m); }
 
-  SegTree(int _m, auto&& func) { build(_m, func); }
+  template <typename F>
+  SegTree(int _m, F&& func) { build(_m, func); }
 
   template <typename It>
   SegTree(It first, It last) { build(first, last); }
@@ -27,7 +28,8 @@ struct SegTree {
     t.assign(n << 1, T::id());
   }
 
-  void build(int _m, auto&& func) {
+  template <typename F>
+  void build(int _m, F&& func) {
     m = _m;
     CHECK(m >= 0);
     n = 1;

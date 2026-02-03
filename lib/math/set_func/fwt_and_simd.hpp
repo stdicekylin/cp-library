@@ -1,6 +1,6 @@
 #pragma once
 
-#include "lib/debug.hpp"
+#include "lib/utils/debug.hpp"
 #include "lib/utils/my_simd.hpp"
 #include "lib/math/my_bit.hpp"
 
