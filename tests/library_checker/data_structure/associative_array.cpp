@@ -8,9 +8,7 @@ using namespace std;
 using ll  = long long;
 using ull = unsigned long long;
 
-FastIO<1 << 20, 1 << 22> io;
-
-constexpr int N = 2e5 + 5;
+FastIO<1 << 20, 1 << 20> io;
 
 FastHashMap<uint64_t, uint64_t, 20> mp;
 
@@ -27,7 +25,7 @@ void solve_main() {
       io >> v;
       mp[k] = v;
     } else {
-      io << mp[k] << '\n';
+      io << mp.get(k) << '\n';
     }
   }
 }

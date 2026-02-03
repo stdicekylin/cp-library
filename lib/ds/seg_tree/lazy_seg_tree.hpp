@@ -18,8 +18,7 @@ struct LazySegTree {
   LazySegTree() = default;
   explicit LazySegTree(int _m) { build(_m); }
 
-  template <typename F>
-  LazySegTree(int _m, F&& func) { build(_m, func); }
+  LazySegTree(int _m, auto&& func) { build(_m, func); }
 
   template <typename It>
   LazySegTree(It first, It last) { build(first, last); }
@@ -29,19 +28,18 @@ struct LazySegTree {
     CHECK(m >= 0);
     n = 1;
     while (n < m) n <<= 1;
-    h = my_bit::__lg(n);
+    h = internal::__lg(n);
     t.assign(n << 1, T::id());
     tag.assign(n << 1, T::tag_id());
     has_tag.assign(n << 1, 0);
   }
 
-  template <typename F>
-  void build(int _m, F&& func) {
+  void build(int _m, auto&& func) {
     m = _m;
     CHECK(m >= 0);
     n = 1;
     while (n < m) n <<= 1;
-    h = my_bit::__lg(n);
+    h = internal::__lg(n);
     t.assign(n << 1, T::id());
     tag.assign(n << 1, T::tag_id());
     has_tag.assign(n << 1, 0);
@@ -55,7 +53,7 @@ struct LazySegTree {
     CHECK(m >= 0);
     n = 1;
     while (n < m) n <<= 1;
-    h = my_bit::__lg(n);
+    h = internal::__lg(n);
     t.assign(n << 1, T::id());
     tag.assign(n << 1, T::tag_id());
     has_tag.assign(n << 1, 0);
@@ -89,20 +87,20 @@ struct LazySegTree {
     CHECK(0 <= l && l <= r && r <= m);
     if (l == r) return;
     l += n, r += n;
-    int w = my_bit::__lg(l ^ r);
-    int cl = my_bit::countr_zero(l);
-    int cr = my_bit::countr_zero(r);
+    int w = internal::__lg(l ^ r);
+    int cl = internal::countr_zero(l);
+    int cr = internal::countr_zero(r);
 
     for (int i = h; i > cl; --i) push_down(l >> i);
     for (int i = std::max(cl, w); i > cr; --i) push_down(r >> i);
 
     int L = l, R = r;
-    int k = my_bit::__lg(--L ^ R);
+    int k = internal::__lg(--L ^ R);
 
     int cL = L;
     L = ~L & ((1 << k) - 1);
     while (L > 0) {
-      int i = my_bit::countr_zero(L);
+      int i = internal::countr_zero(L);
       L ^= 1 << i;
       apply_node(cL >> i ^ 1, v);
     }
@@ -110,7 +108,7 @@ struct LazySegTree {
     int cR = R;
     R &= (1 << k) - 1;
     while (R > 0) {
-      int i = my_bit::__lg(R);
+      int i = internal::__lg(R);
       R ^= 1 << i;
       apply_node(cR >> i ^ 1, v);
     }

@@ -8,8 +8,8 @@ struct HashMapCore {
   static constexpr uint32_t Shift = 64 - N;
 
   size_t counter = 0;
-  K key[Size];
-  V val[Size];
+  std::array<K, Size> key;
+  std::array<V, Size> val;
   std::bitset<Size> used;
   std::vector<uint32_t> bucket;
   Hasher hasher;
@@ -46,9 +46,16 @@ struct HashMapCore {
         }
         return val[h] = V{};
       }
-      if (key[h] == k) {
-        return val[h];
-      }
+      if (key[h] == k) return val[h];
+      ++h &= Mask;
+    }
+  }
+
+  V get(const K& k) const {
+    uint32_t h = get_hash(k);
+    while (true) {
+      if (!used[h]) return V{};
+      if (key[h] == k) return val[h];
       ++h &= Mask;
     }
   }

@@ -1,7 +1,7 @@
 // https://qoj.ac/problem/4535
 
-#include <bits/stdc++.h>
 #pragma GCC optimize(3)
+#include <bits/stdc++.h>
 #include "lib/utils/fast_io.hpp"
 #include "lib/ds/seg_tree/tag_seg_tree.hpp"
 using namespace std;
@@ -9,9 +9,8 @@ using namespace std;
 using ll  = long long;
 using ull = unsigned long long;
 
-FastIO<1 << 20, 1 << 22> io;
+FastIO<1 << 20, 1 << 20> io;
 
-constexpr int N = 2e5 + 5;
 constexpr ll inf = 1e18;
 
 struct Node {

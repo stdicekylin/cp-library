@@ -9,8 +9,6 @@ using ull = unsigned long long;
 
 // FastIO<1 << 20, 1 << 20> io;
 
-constexpr int N = 2e5 + 5;
-
 void solve_main() {
   uint32_t a, b;
   cin >> a >> b;

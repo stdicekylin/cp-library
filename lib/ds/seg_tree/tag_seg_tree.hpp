@@ -18,8 +18,7 @@ struct TagSegTree {
   TagSegTree() = default;
   explicit TagSegTree(int _m) { build(_m); }
 
-  template <typename F>
-  TagSegTree(int _m, F&& func) { build(_m, func); }
+  TagSegTree(int _m, auto&& func) { build(_m, func); }
 
   template <typename It>
   TagSegTree(It first, It last) { build(first, last); }
@@ -29,19 +28,18 @@ struct TagSegTree {
     CHECK(m >= 0);
     n = 1;
     while (n < m) n <<= 1;
-    h = my_bit::__lg(n);
+    h = internal::__lg(n);
     val.assign(n, T::id());
     tag.assign(n << 1, T::tag_id());
     has_tag.assign(n << 1, 0);
   }
 
-  template <typename F>
-  void build(int _m, F&& func) {
+  void build(int _m, auto&& func) {
     m = _m;
     CHECK(m >= 0);
     n = 1;
     while (n < m) n <<= 1;
-    h = my_bit::__lg(n);
+    h = internal::__lg(n);
     val.assign(n, T::id());
     tag.assign(n << 1, T::tag_id());
     has_tag.assign(n << 1, 0);
@@ -54,7 +52,7 @@ struct TagSegTree {
     CHECK(m >= 0);
     n = 1;
     while (n < m) n <<= 1;
-    h = my_bit::__lg(n);
+    h = internal::__lg(n);
     val.assign(n, T::id());
     tag.assign(n << 1, T::tag_id());
     has_tag.assign(n << 1, 0);
@@ -96,19 +94,19 @@ struct TagSegTree {
     CHECK(0 <= l && l <= r && r <= m);
     if (l == r) return;
     l += n, r += n;
-    int w = my_bit::__lg(l ^ r);
-    int cl = my_bit::countr_zero(l);
-    int cr = my_bit::countr_zero(r);
+    int w = internal::__lg(l ^ r);
+    int cl = internal::countr_zero(l);
+    int cr = internal::countr_zero(r);
 
     for (int i = h; i > cl; --i) push_down(l >> i);
     for (int i = std::max(cl, w); i > cr; --i) push_down(r >> i);
 
-    w = my_bit::__lg(--l ^ r);
+    w = internal::__lg(--l ^ r);
 
     cl = l;
     l = ~l & ((1 << w) - 1);
     while (l > 0) {
-      int i = my_bit::countr_zero(l);
+      int i = internal::countr_zero(l);
       l ^= 1 << i;
       apply_node(cl >> i ^ 1, v);
     }
@@ -116,7 +114,7 @@ struct TagSegTree {
     cr = r;
     r &= (1 << w) - 1;
     while (r > 0) {
-      int i = my_bit::__lg(r);
+      int i = internal::__lg(r);
       r ^= 1 << i;
       apply_node(cr >> i ^ 1, v);
     }

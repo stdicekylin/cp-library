@@ -7,8 +7,8 @@ struct FastHashMap {
   static constexpr uint32_t Shift = 64 - N;
   static constexpr uint64_t Magic = 11995408973635179863ull;
 
-  K key[Size];
-  V val[Size];
+  std::array<K, Size> key;
+  std::array<V, Size> val;
   std::bitset<Size> used;
 
   static constexpr uint32_t get_hash(const K& k) {
@@ -27,9 +27,16 @@ struct FastHashMap {
         key[h] = k;
         return val[h] = V{};
       }
-      if (key[h] == k) {
-        return val[h];
-      }
+      if (key[h] == k) return val[h];
+      ++h &= Mask;
+    }
+  }
+
+  V get(const K& k) const {
+    uint32_t h = get_hash(k);
+    while (true) {
+      if (!used[h]) return V{};
+      if (key[h] == k) return val[h];
       ++h &= Mask;
     }
   }

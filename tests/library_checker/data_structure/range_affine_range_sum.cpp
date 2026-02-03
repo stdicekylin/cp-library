@@ -1,5 +1,6 @@
 // https://judge.yosupo.jp/problem/range_affine_range_sum
 
+#pragma GCC optimize(3)
 #include <bits/stdc++.h>
 #include "lib/utils/fast_io.hpp"
 #include "lib/ds/seg_tree/lazy_seg_tree.hpp"
@@ -8,13 +9,12 @@ using namespace std;
 using ll  = long long;
 using ull = unsigned long long;
 
-FastIO<1 << 20, 1 << 21> io;
+FastIO<1 << 20, 1 << 20> io;
 
-constexpr int N = 2e5 + 5;
 constexpr int P = 998244353;
 
 inline constexpr uint32_t reduce(uint32_t x) {
-  return x - (x >= P) * P;
+  return std::min(x, x - P);
 }
 
 struct RangeAffineRangeSum {

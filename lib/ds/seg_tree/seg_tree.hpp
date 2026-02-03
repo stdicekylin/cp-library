@@ -14,8 +14,7 @@ struct SegTree {
   SegTree() = default;
   explicit SegTree(int _m) { build(_m); }
 
-  template <typename F>
-  SegTree(int _m, F&& func) { build(_m, func); }
+  SegTree(int _m, auto&& func) { build(_m, func); }
 
   template <typename It>
   SegTree(It first, It last) { build(first, last); }
@@ -28,8 +27,7 @@ struct SegTree {
     t.assign(n << 1, T::id());
   }
 
-  template <typename F>
-  void build(int _m, F&& func) {
+  void build(int _m, auto&& func) {
     m = _m;
     CHECK(m >= 0);
     n = 1;
@@ -79,12 +77,12 @@ struct SegTree {
   Value evaluate(int l, int r, Value val, F&& func) const {
     CHECK(0 <= l && l <= r && r <= m);
     l += n - 1, r += n;
-    int w = my_bit::__lg(l ^ r);
+    int w = internal::__lg(l ^ r);
 
     int cl = l;
     l = ~l & ((1 << w) - 1);
     while (l > 0) {
-      int i = my_bit::countr_zero(l);
+      int i = internal::countr_zero(l);
       l ^= 1 << i;
       val = func(val, t[cl >> i ^ 1]);
     }
@@ -92,7 +90,7 @@ struct SegTree {
     int cr = r;
     r &= (1 << w) - 1;
     while (r > 0) {
-      int i = my_bit::__lg(r);
+      int i = internal::__lg(r);
       r ^= 1 << i;
       val = func(val, t[cr >> i ^ 1]);
     }

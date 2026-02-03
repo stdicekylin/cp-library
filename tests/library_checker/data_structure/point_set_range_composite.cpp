@@ -8,9 +8,8 @@ using namespace std;
 using ll  = long long;
 using ull = unsigned long long;
 
-FastIO<1 << 20, 1 << 21> io;
+FastIO<1 << 20, 1 << 20> io;
 
-constexpr int N = 2e5 + 5;
 constexpr int P = 998244353;
 
 struct PointSetRangeComposite {

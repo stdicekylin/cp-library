@@ -1,54 +1,44 @@
 #pragma once
 
-namespace my_type_traits {
+namespace internal {
 
-template <class T>
-using remove_cvref_t = std::remove_cv_t<std::remove_reference_t<T>>;
-
-template <class T>
-struct make_unsigned : std::make_unsigned<remove_cvref_t<T>> {};
-
-template <class T>
-using make_unsigned_t = typename make_unsigned<T>::type;
-
-template <class T>
-struct is_signed : std::is_signed<remove_cvref_t<T>> {};
-
-template <class T>
-constexpr bool is_signed_v = is_signed<T>::value;
-
-template <class T>
-struct is_unsigned : std::is_unsigned<remove_cvref_t<T>> {};
-
-template <class T>
-constexpr bool is_unsigned_v = is_unsigned<T>::value;
-
-template <class T>
-struct is_integral : std::is_integral<remove_cvref_t<T>> {};
-
-template <class T>
-constexpr bool is_integral_v = is_integral<T>::value;
+template <typename T>
+struct make_unsigned : std::make_unsigned<std::remove_cvref_t<T>> {};
 
 #ifdef __SIZEOF_INT128__
 
-template <>
-struct make_unsigned<__int128_t> { using type = __uint128_t; };
+template <typename T>
+  requires(std::same_as<std::remove_cvref_t<T>, __int128_t> ||
+           std::same_as<std::remove_cvref_t<T>, __uint128_t>)
+struct make_unsigned<T> {
+  using type = __uint128_t;
+};
 
-template <>
-struct make_unsigned<__uint128_t> { using type = __uint128_t; };
+template <typename T>
+concept signed_integral = std::signed_integral<std::remove_cvref_t<T>> ||
+                          std::same_as<std::remove_cvref_t<T>, __int128_t>;
 
-template <>
-struct is_signed<__int128_t> : std::true_type {};
+template <typename T>
+concept unsigned_integral = std::unsigned_integral<std::remove_cvref_t<T>> ||
+                            std::same_as<std::remove_cvref_t<T>, __uint128_t>;
 
-template <>
-struct is_unsigned<__uint128_t> : std::true_type {};
+template <typename T>
+concept integral = signed_integral<T> || unsigned_integral<T>;
 
-template <>
-struct is_integral<__int128_t> : std::true_type {};
+#else
 
-template <>
-struct is_integral<__uint128_t> : std::true_type {};
+template <typename T>
+concept signed_integral = std::signed_integral<std::remove_cvref_t<T>>;
+
+template <typename T>
+concept unsigned_integral = std::unsigned_integral<std::remove_cvref_t<T>>;
+
+template <typename T>
+concept integral = std::integral<std::remove_cvref_t<T>>;
 
 #endif
 
-}  // namespace my_type_traits
+template <typename T>
+using make_unsigned_t = typename make_unsigned<T>::type;
+
+}  // namespace internal

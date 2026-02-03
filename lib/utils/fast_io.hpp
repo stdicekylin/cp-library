@@ -48,12 +48,13 @@ struct FastInput {
 
 #ifdef ENABLE_MMAP
   template <int N>
-  void ensure() { (void)N; }
+  void ensure() {}
 #else
   template <int N>
   void ensure() {
     int rem = end - cur;
-    if (__builtin_expect(rem >= N, true)) return;
+    if (rem >= N) [[likely]]
+      return;
     if (rem > 0 && cur != buf) memmove(buf, cur, rem);
     cur = buf;
     end = buf + rem + fread(buf + rem, 1, BufSize - rem, file);
@@ -63,7 +64,7 @@ struct FastInput {
 
   void skip_space() {
     ensure<1>();
-    while (__builtin_expect(*cur < 33, false)) {
+    while (*cur < 33) [[unlikely]] {
       ++cur;
       ensure<1>();
       CHECK(cur < end);
@@ -78,8 +79,9 @@ struct FastInput {
     ++cur;
   }
 
-  template <typename T, int N = std::numeric_limits<T>::digits10 / 8>
-  std::enable_if_t<my_type_traits::is_unsigned_v<T>, void> read(T& x) {
+  template <internal::unsigned_integral T,
+            int N = std::numeric_limits<T>::digits10 / 8>
+  void read(T& x) {
     ensure<40>();
     CHECK(*cur >= '0' && *cur <= '9');
     x = *cur++ & 15;
@@ -104,9 +106,10 @@ struct FastInput {
     ++cur;
   }
 
-  template <typename T, int N = std::numeric_limits<T>::digits10 / 8>
-  std::enable_if_t<my_type_traits::is_signed_v<T>, void> read(T& x) {
-    using U = typename my_type_traits::make_unsigned_t<T>;
+  template <internal::signed_integral T,
+            int N = std::numeric_limits<T>::digits10 / 8>
+  void read(T& x) {
+    using U = internal::make_unsigned_t<T>;
 
     bool neg = (*cur == '-');
     cur += neg;
@@ -176,27 +179,35 @@ struct FastOutput {
   char* buf;
   char* cur;
   char* end;
-  char table[40000];
+
+  static constexpr auto table = [] {
+    std::array<std::array<char, 4>, 10000> res1;
+    std::array<std::array<char, 4>, 10000> res2;
+
+    for (int i = 0; i < 10000; ++i) {
+      res2[i][0] = '0' + i / 1000;
+      res2[i][1] = '0' + i / 100 % 10;
+      res2[i][2] = '0' + i / 10 % 10;
+      res2[i][3] = '0' + i % 10;
+      
+      int j = 0;
+      if (i >= 1000) res1[i][j++] = res2[i][0];
+      if (i >= 100) res1[i][j++] = res2[i][1];
+      if (i >= 10) res1[i][j++] = res2[i][2];
+      res1[i][j] = res2[i][3];
+    }
+
+    return std::make_pair(res1, res2);
+  }();
 
   explicit FastOutput(FILE* _file = stdout) : file(_file) {
     cur = buf = new char[BufSize];
     end = buf + BufSize;
-
-    char* pos = table;
-    for (char i = 48; i < 58; ++i) {
-      for (char j = 48; j < 58; ++j) {
-        for (char k = 48; k < 58; ++k) {
-          for (char l = 48; l < 58; ++l) {
-            *pos++ = i, *pos++ = j, *pos++ = k, *pos++ = l;
-          }
-        }
-      }
-    }
   }
 
   template <int N = BufSize>
   void flush() {
-    if (__builtin_expect(end - cur < N, false)) {
+    if (end - cur < N) [[unlikely]] {
       fwrite(buf, 1, cur - buf, file);
       cur = buf;
     }
@@ -208,31 +219,29 @@ struct FastOutput {
   }
 
   template <bool head = false>
-  std::enable_if_t<head, void> print_unit(uint32_t x) {
-    int cnt = (x > 0) + (x > 9) + (x > 99) + (x > 999);
-    memcpy(cur, table + (x << 2) + 4 - cnt, cnt);
-    cur += cnt;
-  }
-
-  template <bool head = false>
-  std::enable_if_t<!head, void> print_unit(uint32_t x) {
-    memcpy(cur, table + (x << 2), 4);
-    cur += 4;
-  }
-
-  template <int N, bool head = true, typename T>
-  std::enable_if_t<(N > 0), void> print(T x) {
-    print<N - 1, head>(x / 10000);
-    print_unit<false>(x % 10000);
+  void print_unit(uint32_t x) {
+    if constexpr (head) {
+      memcpy(cur, &table.first[x], 4);
+      cur += 1 + (x > 9) + (x > 99) + (x > 999);
+    } else {
+      memcpy(cur, &table.second[x], 4);
+      cur += 4;
+    }
   }
 
   template <int N, bool head = true, typename T>
-  std::enable_if_t<(N == 0), void> print(T x) {
-    print_unit<head>(x);
+  void print(T x) {
+    if constexpr (N == 0) {
+      print_unit<head>(x);
+    } else {
+      print<N - 1, head>(x / 10000);
+      print_unit<false>(x % 10000);
+    }
   }
 
   template <typename T>
-  std::enable_if_t<(sizeof(T) < 8), void> write(T x) {
+    requires(sizeof(T) < 8)
+  void write(T x) {
     if (x > 9999'9999) {
       print<2>(x);
     } else if (x > 9999) {
@@ -243,7 +252,8 @@ struct FastOutput {
   }
 
   template <typename T>
-  std::enable_if_t<(sizeof(T) == 8), void> write(T x) {
+    requires(sizeof(T) == 8)
+  void write(T x) {
     if (x > 9999'9999'9999'9999ull) {
       print<4>(x);
     } else if (x > 9999'9999'9999ull) {
@@ -258,49 +268,40 @@ struct FastOutput {
   }
 
   template <typename T>
-  std::enable_if_t<(sizeof(T) > 8), void> write(T x) {
-    static constexpr uint64_t limit1 = 1'0000'0000'0000'0000ull;
-    static constexpr __uint128_t limit2 =
-        static_cast<__uint128_t>(limit1) * static_cast<__uint128_t>(limit1);
-    if (x < limit1) {
+    requires(sizeof(T) > 8)
+  void write(T x) {
+    static constexpr uint64_t kE16 = 1'0000'0000'0000'0000ull;
+    static constexpr __uint128_t kE32 =
+        static_cast<__uint128_t>(kE16) * static_cast<__uint128_t>(kE16);
+
+    if (x < kE16) {
       write(static_cast<uint64_t>(x));
-    } else if (x < limit2) {
-      write(static_cast<uint64_t>(x / limit1));
-      print<3, false>(static_cast<uint64_t>(x % limit1));
+    } else if (x < kE32) {
+      write(static_cast<uint64_t>(x / kE16));
+      print<3, false>(static_cast<uint64_t>(x % kE16));
     } else {
-      write(static_cast<uint32_t>(x / limit2));
-      x %= limit2;
-      print<3, false>(static_cast<uint64_t>(x / limit1));
-      print<3, false>(static_cast<uint64_t>(x % limit1));
+      write(static_cast<uint32_t>(x / kE32));
+      x %= kE32;
+      print<3, false>(static_cast<uint64_t>(x / kE16));
+      print<3, false>(static_cast<uint64_t>(x % kE16));
     }
   }
 
-  template <typename T>
-  std::enable_if_t<my_type_traits::is_unsigned_v<T>, FastOutput&> operator<<(
-      T x) {
+  template <internal::unsigned_integral T>
+  FastOutput& operator<<(T x) {
     flush<std::numeric_limits<T>::digits10 + 1>();
-    if (x > 0) {
-      write(x);
-    } else {
-      *cur++ = '0';
-    }
+    write(x);
     return *this;
   }
 
-  template <typename T>
-  std::enable_if_t<my_type_traits::is_signed_v<T>, FastOutput&> operator<<(
-      T x) {
-    using U = typename my_type_traits::make_unsigned_t<T>;
+  template <internal::signed_integral T>
+  FastOutput& operator<<(T x) {
+    using U = internal::make_unsigned_t<T>;
 
     flush<std::numeric_limits<T>::digits10 + 2>();
-    if (x > 0) {
-      write(static_cast<U>(x));
-    } else if (x < 0) {
-      *cur++ = '-';
-      write(-static_cast<U>(x));
-    } else {
-      *cur++ = '0';
-    }
+    *cur = '-';
+    cur += (x < 0);
+    write(x < 0 ? -static_cast<U>(x) : static_cast<U>(x));
     return *this;
   }
 
@@ -318,14 +319,14 @@ struct FastOutput {
 
   FastOutput& operator<<(const char* s) {
     uint32_t len = strlen(s);
-    if (__builtin_expect(len > BufSize, false)) {
+    if (len > BufSize) [[unlikely]] {
       flush();
       do {
         fwrite(s, 1, BufSize, file);
         s += BufSize;
         len -= BufSize;
       } while (len > BufSize);
-    } else if (__builtin_expect(end - cur < len, false)) {
+    } else if (end - cur < len) [[unlikely]] {
       flush();
     }
     memcpy(cur, s, len);

@@ -7,9 +7,7 @@ using namespace std;
 using ll  = long long;
 using ull = unsigned long long;
 
-FastIO<1 << 20, 1 << 21> io;
-
-constexpr int N = 2e5 + 5;
+FastIO<1 << 20, 1 << 19> io;
 
 void solve_main() {
   uint64_t a, b;

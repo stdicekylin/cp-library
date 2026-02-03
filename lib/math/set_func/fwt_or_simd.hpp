@@ -7,10 +7,7 @@
 namespace my_simd {
 
 template <uint32_t P, int N, typename It>
-std::enable_if_t<(N <= 1), void> fwt_or(It f) {}
-
-template <uint32_t P, int N, typename It>
-std::enable_if_t<(N > 1), void> fwt_or(It f) {
+void fwt_or(It f) {
   auto add = [&](uint32_t x, uint32_t y) -> uint32_t {
     x += y;
     return std::min(x, x - P);
@@ -18,19 +15,17 @@ std::enable_if_t<(N > 1), void> fwt_or(It f) {
 
   static constexpr int len = N >> 1;
 
-  fwt_or<P, len>(f);
-  fwt_or<P, len>(f + len);
-
-  for (int i = 0; i < len; ++i) {
-    f[i + len] = add(f[i], f[i + len]);
+  if constexpr (len > 0) {
+    fwt_or<P, len>(f);
+    fwt_or<P, len>(f + len);
+    for (int i = 0; i < len; ++i) {
+      f[i + len] = add(f[i], f[i + len]);
+    }
   }
 }
 
 template <uint32_t P, int N, typename It>
-std::enable_if_t<(N <= 1), void> ifwt_or(It f) {}
-
-template <uint32_t P, int N, typename It>
-std::enable_if_t<(N > 1), void> ifwt_or(It f) {
+void ifwt_or(It f) {
   auto sub = [&](uint32_t x, uint32_t y) -> uint32_t {
     x -= y;
     return std::min(x, x + P);
@@ -38,24 +33,25 @@ std::enable_if_t<(N > 1), void> ifwt_or(It f) {
 
   static constexpr int len = N >> 1;
 
-  ifwt_or<P, len>(f);
-  ifwt_or<P, len>(f + len);
-
-  for (int i = 0; i < len; ++i) {
-    f[i + len] = sub(f[i + len], f[i]);
+  if constexpr (len > 0) {
+    ifwt_or<P, len>(f);
+    ifwt_or<P, len>(f + len);
+    for (int i = 0; i < len; ++i) {
+      f[i + len] = sub(f[i + len], f[i]);
+    }
   }
 }
 
 template <uint32_t P, typename It>
 void fwt_or(It f, int n) {
-  my_bit::bit_width_const<30>(n, [&]<uint32_t N>() {
+  internal::bit_width_const<30>(n, [&]<uint32_t N>() {
     fwt_or<P, 1 << N>(f);
   });
 }
 
 template <uint32_t P, typename It>
 void ifwt_or(It f, int n) {
-  my_bit::bit_width_const<30>(n, [&]<uint32_t N>() {
+  internal::bit_width_const<30>(n, [&]<uint32_t N>() {
     ifwt_or<P, 1 << N>(f);
   });
 }

@@ -11,7 +11,6 @@ using ull = unsigned long long;
 
 FastIO<1 << 20, 1 << 20> io;
 
-constexpr int N = 2e5 + 5;
 constexpr uint32_t P = 998244353;
 
 void solve_main() {
