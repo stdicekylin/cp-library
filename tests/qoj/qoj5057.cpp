@@ -11,7 +11,6 @@ using ull = unsigned long long;
 
 FastIO<1 << 20, 1 << 20> io;
 
-
 struct Node {
   struct Info {
     uint32_t odd, even;
@@ -42,7 +41,6 @@ struct Node {
     lhs.even += rhs.even;
   }
 };
-
 
 constexpr int N = 5e5 + 5;
 

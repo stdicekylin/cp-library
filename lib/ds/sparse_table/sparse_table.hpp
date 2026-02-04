@@ -59,7 +59,7 @@ struct SparseTable {
 
   Info prod(int l, int r) const {
     CHECK(0 <= l && l <= r && r <= n);
-    if (l == r) return T::id();
+    if (l == r) [[unlikely]] return T::id();
     int k = internal::__lg(r - l);
     return T::op(st[k][l], st[k][r - (1 << k)]);
   }

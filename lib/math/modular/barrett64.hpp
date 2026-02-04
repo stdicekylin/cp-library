@@ -18,7 +18,7 @@ struct Barrett64 {
 
   constexpr uint64_t reduce(uint64_t x) const {
     x -= static_cast<uint64_t>(static_cast<__uint128_t>(x) * inv >> 64) * mod;
-    x += (x >> 63) * mod;
+    x += -(x >> 63) & mod; 
     return x;
   }
 };

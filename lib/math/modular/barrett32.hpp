@@ -18,7 +18,7 @@ struct Barrett32 {
 
   constexpr uint32_t reduce(uint32_t x) const {
     x -= static_cast<uint32_t>(static_cast<uint64_t>(x) * inv >> 32) * mod;
-    x += (x >> 31) * mod;
+    x += -(x >> 31) & mod;
     return x;
   }
 };
