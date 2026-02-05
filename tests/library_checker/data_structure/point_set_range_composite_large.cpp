@@ -1,9 +1,9 @@
 // https://judge.yosupo.jp/problem/point_set_range_composite_large_array
 
-#pragma GCC optimize(3)
 #include <bits/stdc++.h>
 #include "lib/utils/fast_io.hpp"
 #include "lib/ds/seg_tree/seg_tree.hpp"
+#include "lib/algo/radix_sort.hpp"
 using namespace std;
 
 using ll  = long long;
@@ -28,25 +28,29 @@ void solve_main() {
   io >> n >> q;
 
   vector<tuple<bool, uint32_t, uint32_t, uint32_t>> qry(q);
-  vector<pair<uint32_t, uint32_t>> aux;
+  vector<uint64_t> aux;
   aux.reserve(q << 1);
 
   for (int i = 0; i < q; ++i) {
     auto& [op, a, b, c] = qry[i];
     io >> op >> a >> b >> c;
     if (!op) {
-      aux.emplace_back(a, i << 2);
+      aux.push_back(static_cast<uint64_t>(i << 2) << 32 | a);
     } else {
-      aux.emplace_back(a, i << 2 | 1);
-      aux.emplace_back(b, i << 2 | 2);
+      aux.push_back(static_cast<uint64_t>(i << 2 | 1) << 32 | a);
+      aux.push_back(static_cast<uint64_t>(i << 2 | 2) << 32 | b);
     }
   }
 
-  sort(aux.begin(), aux.end());
+  radix_sort_u32<uint64_t, 15>(aux.data(), aux.size(), [&](auto x) {
+    return static_cast<uint32_t>(x);
+  });
 
   uint32_t lst = -1u;
   int m = 0;
-  for (const auto& [x, y] : aux) {
+  for (auto val : aux) {
+    uint32_t x = static_cast<uint32_t>(val);
+    uint32_t y = val >> 32;
     auto& t = qry[y >> 2];
     if (y & 3) {
       (y & 1 ? get<1>(t) : get<2>(t)) = m - (x == lst);
